@@ -5,21 +5,21 @@
 
 %union
 {
-    int             i;
+   // int             i;
     double          d;
-    std::wstring    s;
-    void*           p;
+   // std::wstring    s;
+   // void*           p;
 }
 
-%token <i>              NUM               // Simple double precision number
+%token <d>              NUM               // Simple double precision number
 //%token <u_symbol>   ID          // Variable
-%type  <i>              exp
+%type  <d>              exp
 
 //%right '='
 %left   PLUS MINUS
 %left   MULT DIV
-//%left   NEG                     // negation--unary minus 
-//%right  '^'                     // exponentiation   
+%left   NEG                     // negation--unary minus 
+%right  POW                     // exponentiation   
 
 
 %%
@@ -87,17 +87,16 @@ exp:
         $$ = $1 / $3;
         std::cout << "\t DIV: " << $1 << " / " << $3 << " = " << $$ << '\n';
     }
-    /*
 |
     MINUS exp %prec NEG
     {
-        $$ = -$1;
-        std::cout << "\t NEG: " << $1 << " = " << $$ << '\n';
+        $$ = -$2;
+        std::cout << "\t NEG: " << $2 << " = " << $$ << '\n';
     }
 |
-    exp '^' exp
+    exp POW exp
     {
-        $$ = pow($1, $3);
+        $$ = -1;
         std::cout << "\t POW: " << $1 << " ^ " << $3 << " = " << $$ << '\n';
     }
 |
@@ -106,5 +105,4 @@ exp:
         $$ = $2;
         std::cout << "\t ( exp ): " << $2 << " = " << $$ << '\n';
     }
-    */
 ;
