@@ -2,10 +2,11 @@
 
 %scanner 					../lexer/Scanner.ih
 %scanner-token-function 	d_scanner.lex()
+%baseclass-preinclude		cmath
 
 %union
 {
-	// int 			i;
+	int 			i;
 	double			d;
 	// std::wstring	s;
 	// void*		p;
@@ -95,7 +96,7 @@ exp:
 |
 	exp POW exp
 	{
-		$$ = -1;
+		$$ = pow($1, $3);
 		std::cout << "\t POW: " << $1 << " ^ " << $3 << " = " << $$ << '\n';
 	}
 |
