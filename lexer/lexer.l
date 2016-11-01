@@ -10,8 +10,8 @@
 '*'									return Parser::MULT;
 '/'									return Parser::DIV;
 '^'									return Parser::POW;
-'('									return Parser::OPAR;
-')'									return Parser::CPAR;
+'('									return '(';
+')'									return ')';
 
 "true"|"TRUE"|"false"|"FALSE"		return Parser::BOOL;
 [[:digit:]]*						return Parser::INT;

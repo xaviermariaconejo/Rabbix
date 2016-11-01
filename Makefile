@@ -1,4 +1,4 @@
-rabbix: lexer parser main.cpp rabbix
+rabbix: lexer parser main.cpp
 	g++ --std=c++11 main.cpp lexer/lex.cc parser/parse.cc -o rabbix
 
 lexer: lexer/lexer.l
