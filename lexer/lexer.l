@@ -12,7 +12,10 @@
 '^'									return Parser::POW;
 '('									return Parser::OPAR;
 ')'									return Parser::CPAR;
-[[:digit:]]*						return Parser::NUM;
+
+"true"|"TRUE"|"false"|"FALSE"		return Parser::BOOL;
+[[:digit:]]*						return Parser::INT;
+[[:digit:]]*(','|'.')[[:digit:]]*	return Parser::DOUBLE;
 //[[:alpha:]_][[:alnum:]_]*			return Parser::ID;
 '\n'								return '\n';
 ' '

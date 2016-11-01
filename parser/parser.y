@@ -12,7 +12,9 @@
 	// void*		p;
 }
 
-%token <d>				NUM
+%token <d>				BOOL
+%token <d>				INT
+%token <d>				DOUBLE
 //%token <u_symbol>		ID
 %type  <d>				exp
 
@@ -44,10 +46,10 @@ line:
 ;
 
 exp:
-	NUM
+	INT
 	{
 		$$ = std::stoi(d_scanner.matched());
-		std::cout << "\t NUM: " << $$ << '\n';
+		std::cout << "\t INT: " << $$ << '\n';
 	}
     /*
 |
