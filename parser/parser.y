@@ -2,22 +2,22 @@
 
 %scanner 					../lexer/Scanner.ih
 %scanner-token-function 	d_scanner.lex()
-%baseclass-preinclude		cmath
 
 %union
 {
 	int 			i;
 	double			d;
-	// std::wstring	s;
-	// void*		p;
+	void*			p;
 }
 
-%token <i>				BOOL
-%token <i>				INT
-%token <d>				DOUBLE
-//%token <u_symbol>		ID
+%token 					OPAR CPAR
+%token 	<i>				BOOL
+%token 	<i>				INT
+%token 	<d>				DOUBLE
+%token 	<p>				ID
+%type	<d>				exp
 
-//%right '='
+%right 	EQUAL
 %left	PLUS MINUS
 %left	MULT DIV
 %left	NEG
@@ -38,7 +38,8 @@ line:
 |
 	exp '\n'
     {
-		std::cout << "\t EXP: " << $1.i << " " << $1.d << '\n';
+    	//std::string* s = (std::string)$1.p;
+		std::cout << "\t EXP: " << $1 << " " << $1.i << " " << $1.d << " " << $1.p << " " << "" << '\n';
     }
 |
 	error '\n'
@@ -47,77 +48,70 @@ line:
 exp:
 	INT
 	{
-		$$.i = std::stoi(d_scanner.matched());
+		$$.i = stoi(d_scanner.matched());
 		std::cout << "\t INT: " << $$ << '\n';
 	}
 |
 	DOUBLE
 	{
-		$$.d = std::stod(d_scanner.matched());
+		$$.d = stod(d_scanner.matched());
 		std::cout << "\t DOUBLE: " << $$ << '\n';
 	}
-    /*
 |
 	ID
 	{
-		$$ = *$1;
-		std::cout << "\t ID: " << $$ << '\n';
+		$$.p = new std::string(d_scanner.matched());
+		std::string* aux =  new std::string(d_scanner.matched());
+		std::cout << "\t ID: " << aux << " " << *(aux) << '\n';
     }
+    /*
 |
-	ID '=' exp
+	ID EQUAL exp
 	{
-		$$ = d_scanner.matched() = $3;
+		$$.p = d_scanner.matched();
 		std::cout << "\t ID = exp: " << $$ << '\n';
 	}
-    */
+	*/
 |
 	exp PLUS exp
 	{
-		$$.i = $1.i + $3.i;
-		$$.d = $1.d + $3.d;
+		$$ = $1 + $3;
 		std::cout << "\t PLUS: " << $1 << " + " << $3 << " = " << $$ << '\n';
 	}
 |
 	exp MINUS exp
 	{
-		$$.i = $1.i - $3.i;
-		$$.d = $1.d - $3.d;
+		$$ = $1 - $3;
 		std::cout << "\t MINUS: " << $1 << " - " << $3 << " = " << $$ << '\n';
 	}
 |
 	exp MULT exp
 	{
-		$$.i = $1.i * $3.i;
-		$$.d = $1.d * $3.d;
+		$$ = $1.i * $3.i;
 		std::cout << "\t MULT: " << $1 << " * " << $3 << " = " << $$ << '\n';
 	}
 |
 	exp DIV exp
 	{
-		$$.i = $1.i / $3.i;
-		$$.d = $1.d / $3.d;
+		$$ = $1 / $3;
 		std::cout << "\t DIV: " << $1 << " / " << $3 << " = " << $$ << '\n';
 	}
 |
 	MINUS exp %prec NEG
 	{
-		$$.i = -$2.i;
-		$$.d = -$2.d;
+		$$ = -$2;
 		std::cout << "\t NEG: " << $2 << " = " << $$ << '\n';
 	}
 |
 	exp POW exp
 	{
-		$$.i = pow($1.i, $3.i);
-		$$.d = pow($1.d, $3.d);
+		$$ = -1;
 		std::cout << "\t POW: " << $1 << " ^ " << $3 << " = " << $$ << '\n';
 	}
-	/*
 |
-	'(' exp ')'
+	OPAR exp CPAR
 	{
 		$$ = $2;
 		std::cout << "\t ( exp ): " << $2 << " = " << $$ << '\n';
 	}
-	*/
 ;
