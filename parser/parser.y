@@ -2,17 +2,18 @@
 
 %scanner 					../lexer/Scanner.ih
 %scanner-token-function 	d_scanner.lex()
+//%parse-param				{int* n}
 
 %union
 {
+	//nomes possar de moment el tree<node>*
 	int 			i;
 	double			d;
 	void*			p;
 }
 
 %token 					OPAR CPAR
-%token 	<i>				BOOL
-%token 	<i>				INT
+%token 	<i>				BOOL INT
 %token 	<d>				DOUBLE
 %token 	<p>				ID
 %type	<d>				exp
@@ -31,6 +32,10 @@ input:
 	// empty
 |
 	input line
+	{
+		global = 3;
+		std::cout << "GLOBAL: " << global << "\n";
+	}
 ;
 
 line:
@@ -38,8 +43,7 @@ line:
 |
 	exp '\n'
     {
-    	//std::string* s = (std::string)$1.p;
-		std::cout << "\t EXP: " << $1 << " " << $1.i << " " << $1.d << " " << $1.p << " " << "" << '\n';
+		std::cout << "\t EXP: " << $1 << " " << $1.i << " " << $1.d << " " << $1.p << " "  << '\n';
     }
 |
 	error '\n'
@@ -49,20 +53,22 @@ exp:
 	INT
 	{
 		$$.i = stoi(d_scanner.matched());
-		std::cout << "\t INT: " << $$ << '\n';
+		std::cout << "\t INT: " << $$.i << '\n';
 	}
 |
 	DOUBLE
 	{
 		$$.d = stod(d_scanner.matched());
-		std::cout << "\t DOUBLE: " << $$ << '\n';
+		std::cout << "\t DOUBLE: " << $$.d << '\n';
 	}
 |
 	ID
 	{
-		$$.p = new std::string(d_scanner.matched());
-		std::string* aux =  new std::string(d_scanner.matched());
-		std::cout << "\t ID: " << aux << " " << *(aux) << '\n';
+		$$.p = static_cast<void*>(new std::string(d_scanner.matched()));
+		void* vp = static_cast<void*>(new std::string(d_scanner.matched()));
+		std::string* sp = static_cast<std::string*>(vp);
+		std::string s = *sp;
+		std::cout << "\t ID: " << s << '\n';
     }
     /*
 |

@@ -14,6 +14,7 @@ class Parser: public ParserBase
 {
     // $insert scannerobject
     Scanner d_scanner;
+    int global;
         
     public:
         int parse();
