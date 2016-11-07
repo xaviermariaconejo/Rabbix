@@ -8,8 +8,9 @@
 	tree<node>* t;
 }
 
-//%token 					OPARENTHESIS CPARENTHESIS EOF
-%token 	<t>				BOOL INT DOUBLE ID funcall exp
+%token 	COMMA SEMICOLON COLON ANDPERSAND QUOTE OPARENTHESIS CPARENTHESIS OBRACKET CBRACKET OBRACER CBRACER
+%token 	<t>	BOOL INT DOUBLE ID
+%type 	<t> funcall exp
 
 %right 	ASSIGMENT
 %left	OR
@@ -25,14 +26,16 @@
 
 
 // A program is a list of main elements (ATN's, states, functions, global variables)
-prog 	: mainElement+ EOF
+prog 	: mainElement EOF
 		;
 
 // A main element is an element as the type of: ATN, State, Function, Global variables
-mainElement	: //atn
+mainElement	: mainElement
+		//	|atn
 		//	| state
 			| func
 		//	| global
+			;
 
 // A function has a name, a list of parameters and a block of instructions	
 func	: FUNC ID params block_instructions
@@ -40,16 +43,22 @@ func	: FUNC ID params block_instructions
 
 
 // The list of parameters grouped in a subtree (it can be empty)
-params	: OPARENTHESIS paramlist? CPARENTHESIS
+params	: OPARENTHESIS paramlist CPARENTHESIS
 		;
 
 // Parameters are separated by commas
-paramlist	: param (COMMA param)*
+paramlist	: //nothing
+			| param multiple_params
 			;
+
+// Because in Bisonc++ doesn't exist the '*' operator
+multiple_params	: //nothing
+				| COMMA param
+				;
 
 // Parameters with & as prefix are passed by reference
 // Only one node with the name of the parameter is created
-param 	:	ANDPERSAND ID
+param 	: ANDPERSAND ID
 		;
 /*
 	param   :   '&' id=ID -> ^(PREF[$id,$id.text])
@@ -58,8 +67,13 @@ param 	:	ANDPERSAND ID
 */
 
 // A list of instructions, all of them gouped in a subtree
-block_instructions	:	OBRACER instruction (SEMICOLON instruction)* CBRACER
+block_instructions	: OBRACER instruction multiple_instrucitons CBRACER
 					;
+
+// Because in Bisonc++ doesn't exist the '*' operator
+multiple_instrucitons	: //nothing
+						| SEMICOLON instruction
+						;
 
 // The different types of instructions
 instruction
@@ -77,17 +91,32 @@ instruction
 assign	:	ID ASSIGMENT expr
 		;
 
-// if-then-else (else is optional)
-ite_stmt	:	IF expr block_instructions (ELSE IF expr block_instructions)* (ELSE block_instructions)?
+// if-then-else (else if & else are optionals)
+ite_stmt	:	IF expr block_instructions else_if else
 			;
+
+// else-if (multiple and optional)
+else_if	: else_if
+		| //nothing
+		| ELSE IF expr block_instructions
+		;
+
+// else (optional)
+else 	: //nothing
+		| ELSE block_instructions
+		;
 
 // while statement
 while_stmt	:	WHILE expr block_instructions
 			;
 
 // Return statement with an expression
-return_stmt	:	RETURN expr?
+return_stmt	:	RETURN possible_expr
 			;
+
+possible_expr	: //nothing
+				| expr
+				;
 
 expr:
 	BOOL
@@ -137,26 +166,79 @@ expr:
 	{
 	}
 |
-	expr (PLUS | MINUS | MULT | MULT | DIV | MOD | POW) expr
+	expr PLUS expr
 	{
 //		$$ = $1 + $3;
 //		std::cout << "\t PLUS: " << $1 << " + " << $3 << " = " << $$ << '\n';
 	}
 |
-	expr (EQUAL | NOT_EQUAL | LT | LE | GT | GE | AND | OR) expr
+	expr MINUS expr
+	{
+	}
+|
+	expr MULT expr
+	{
+	}
+|
+	expr DIV expr
+	{
+	}
+|
+	expr MOD expr
+	{
+	}
+|
+	expr POW expr
+	{
+	}
+|
+	expr EQUAL epxr
+	{
+	}
+|
+	epxr NOT_EQUAL epxr
+	{
+	}
+|
+	expr LT expr
+	{
+	}
+|
+	expr LE expr
+	{
+	}
+|
+	expr GT expr
+	{
+	}
+|
+	expr GE expr
+	{
+	}
+|
+	expr AND expr
+	{
+	}
+|
+	expr OR expr
 	{
 	}
 ;
 
 // A function call has a lits of arguments in parenthesis (possibly empty)
-funcall :	ID OPARENTHESIS expr_list? CPARENTHESIS
+funcall : ID OPARENTHESIS expr_list CPARENTHESIS
 		;
 
 // A list of expressions separated by commas
-expr_list	:	expr (COMMA expr)*
+expr_list	: //nothing
+			| expr multiple_expr
 			;
 
-
+// Because in Bisonc++ doesn't exist the '*' operator
+multiple_expr	: multiple_expr
+				| //nothing
+				| COMMA expr
+				;
 
 
 /*
