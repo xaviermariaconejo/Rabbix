@@ -6,17 +6,11 @@
 
 %union
 {
-	//nomes possar de moment el tree<node>*
-	int 			i;
-	double			d;
-	void*			p;
+	tree<node>* t;
 }
 
-%token 					OPAR CPAR
-%token 	<i>				BOOL INT
-%token 	<d>				DOUBLE
-%token 	<p>				ID
-%type	<d>				exp
+%token 					OPAR CPAR EOF
+%token 	<t>				BOOL INT DOUBLE ID exp
 
 %right 	EQUAL
 %left	PLUS MINUS
@@ -27,6 +21,20 @@
 
 %%
 
+
+// A program is a list of main elements (ATN's, states, functions, global variables)
+prog	: mainElement+ EOF
+        ;
+
+// A main element is an element as the type of: ATN, State, Function, Global variables
+mainElement	: //atn
+		//	| state
+			| func
+		//	| global
+
+// A function has a name, a list of parameters and a block of instructions	
+func	: FUNC ID params block_instructions ENDFUNC!
+        ;
 
 input:
 	// empty

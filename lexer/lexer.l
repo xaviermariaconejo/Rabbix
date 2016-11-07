@@ -17,5 +17,6 @@
 [[:digit:]]*						return Parser::INT;
 [[:digit:]]*(','|'.')[[:digit:]]*	return Parser::DOUBLE;
 [[:alpha:]_][[:alnum:]_]*			return Parser::ID;
+<<EOF>>								return Parser::EOF;
 '\n'								return '\n';
-' '
+' '|'\t'
