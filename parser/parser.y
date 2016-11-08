@@ -48,13 +48,13 @@ params	: OPARENTHESIS paramlist CPARENTHESIS
 		;
 
 // Parameters are separated by commas
-paramlist	: //nothing
-			| param multiple_params
+paramlist	: param multiple_params
+			| //nothing
 			;
 
 // Because in Bisonc++ doesn't exist the '*' operator
-multiple_params	: //nothing
-				| COMMA param
+multiple_params	: multiple_params COMMA param
+				| //nothing
 				;
 
 // Parameters with & as prefix are passed by reference
@@ -72,8 +72,8 @@ block_instructions	: OBRACER instruction multiple_instrucitons CBRACER
 					;
 
 // Because in Bisonc++ doesn't exist the '*' operator
-multiple_instrucitons	: //nothing
-						| SEMICOLON instruction
+multiple_instrucitons	: multiple_instrucitons SEMICOLON instruction
+						| //nothing
 						;
 
 // The different types of instructions
@@ -97,8 +97,7 @@ ite_stmt	:	IF expr block_instructions else_if else
 			;
 
 // else-if (multiple and optional)
-else_if	: else_if
-		| ELSE IF expr block_instructions
+else_if	: else_if ELSE IF expr block_instructions
 		| //nothing
 		;
 
@@ -115,7 +114,7 @@ while_stmt	:	WHILE expr block_instructions
 return_stmt	:	RETURN possible_expr
 			;
 
-possible_expr	: expr
+possible_expr	: possible_expr expr
 				| //nothing
 				;
 
@@ -236,8 +235,7 @@ expr_list	: expr multiple_expr
 			;
 
 // Because in Bisonc++ doesn't exist the '*' operator
-multiple_expr	: multiple_expr
-				| COMMA expr
+multiple_expr	: multiple_expr COMMA expr
 				| //nothing
 				;
 
