@@ -33,9 +33,9 @@
 '=='								return Parser::EQUAL;
 '!='								return Parser::NOT_EQUAL;
 '<'									return Parser::LT;
-LT ASSIGMENT						return Parser::LE;
+'le'								return Parser::LE;
 '>'									return Parser::GT;
-LE ASSIGMENT						return Parser::GE;
+'ge'								return Parser::GE;
 
 "not"|"NOT"|"!"						return Parser::NOT;
 "and"|"AND"|"&&"					return Parser::AND;

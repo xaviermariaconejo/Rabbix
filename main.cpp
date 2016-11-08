@@ -2,5 +2,5 @@
 
 int main(){
 	Parser parser;
-	std::cout << "MAIN: " << parser.parse() << "\n";
+	parser.parse();
 }

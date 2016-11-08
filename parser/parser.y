@@ -2,16 +2,21 @@
 
 %scanner 					../lexer/Scanner.ih
 %scanner-token-function 	d_scanner.lex()
+%baseclass-preinclude		<iostream> 
+
+%{
+	#include "../utils/tree.h"
+%}
 
 %union
 {
-	tree<node>* t;
+	int* t;
 }
 
 %token 	COMMA SEMICOLON COLON ANDPERSAND QUOTE OPARENTHESIS CPARENTHESIS OBRACKET CBRACKET OBRACER CBRACER
 %token 	IF ELSE WHILE DO FOR FUNC RETURN GLOBAL
 %token 	<t>	BOOL INT DOUBLE ID
-%type 	<t> funcall exp
+%type 	<t> funcall expr
 
 %right 	ASSIGMENT
 %left	OR
@@ -31,12 +36,18 @@ prog 	: mainElement EOF
 		;
 
 // A main element is an element as the type of: ATN, State, Function, Global variables
-mainElement	: mainElement
-		//	|atn
-		//	| state
-			| func
-		//	| global
+mainElement	: mainElement func
+			| //nothing
 			;
+
+/*
+mainElement	: mainElement atn
+			| mainElement state
+			| mainElement func
+			| mainElement global
+			| //nothing
+			;
+*/
 
 // A function has a name, a list of parameters and a block of instructions	
 func	: FUNC ID params block_instructions
@@ -78,7 +89,7 @@ multiple_instrucitons	: multiple_instrucitons SEMICOLON instruction
 
 // The different types of instructions
 instruction
-		:	Assignment 		// Assignment
+		:	assign 		// Assignment
 		|	ite_stmt		// if-then-else
 		|	while_stmt		// while statement
 		//|	for_stmt		// for statement
@@ -114,7 +125,7 @@ while_stmt	:	WHILE expr block_instructions
 return_stmt	:	RETURN possible_expr
 			;
 
-possible_expr	: possible_expr expr
+possible_expr	: expr
 				| //nothing
 				;
 
@@ -192,11 +203,11 @@ expr:
 	{
 	}
 |
-	expr EQUAL epxr
+	expr EQUAL expr
 	{
 	}
 |
-	epxr NOT_EQUAL epxr
+	expr NOT_EQUAL expr
 	{
 	}
 |
