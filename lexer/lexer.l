@@ -33,9 +33,9 @@
 '=='								return Parser::EQUAL;
 '!='								return Parser::NOT_EQUAL;
 '<'									return Parser::LT;
-'<='								return Parser::LE;
+LT ASSIGMENT						return Parser::LE;
 '>'									return Parser::GT;
-'>='								return Parser::GE;
+LE ASSIGMENT						return Parser::GE;
 
 "not"|"NOT"|"!"						return Parser::NOT;
 "and"|"AND"|"&&"					return Parser::AND;
@@ -58,5 +58,4 @@
 
 
 // White spaces
-<<EOF>>								return Parser::EOF;
 '\n'|'\r'|'\t'|' '					// nothing

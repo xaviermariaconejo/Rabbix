@@ -9,6 +9,7 @@
 }
 
 %token 	COMMA SEMICOLON COLON ANDPERSAND QUOTE OPARENTHESIS CPARENTHESIS OBRACKET CBRACKET OBRACER CBRACER
+%token 	IF ELSE WHILE DO FOR FUNC RETURN GLOBAL
 %token 	<t>	BOOL INT DOUBLE ID
 %type 	<t> funcall exp
 
@@ -97,13 +98,13 @@ ite_stmt	:	IF expr block_instructions else_if else
 
 // else-if (multiple and optional)
 else_if	: else_if
-		| //nothing
 		| ELSE IF expr block_instructions
+		| //nothing
 		;
 
 // else (optional)
-else 	: //nothing
-		| ELSE block_instructions
+else 	: ELSE block_instructions
+		| //nothing
 		;
 
 // while statement
@@ -114,8 +115,8 @@ while_stmt	:	WHILE expr block_instructions
 return_stmt	:	RETURN possible_expr
 			;
 
-possible_expr	: //nothing
-				| expr
+possible_expr	: expr
+				| //nothing
 				;
 
 expr:
@@ -230,14 +231,14 @@ funcall : ID OPARENTHESIS expr_list CPARENTHESIS
 		;
 
 // A list of expressions separated by commas
-expr_list	: //nothing
-			| expr multiple_expr
+expr_list	: expr multiple_expr
+			| //nothing
 			;
 
 // Because in Bisonc++ doesn't exist the '*' operator
 multiple_expr	: multiple_expr
-				| //nothing
 				| COMMA expr
+				| //nothing
 				;
 
 
