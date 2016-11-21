@@ -4,5 +4,5 @@ parser.tab.c parser.tab.h: parser.y
 lex.yy.c: lexer.l parser.tab.h
 	flex lexer.l
 
-snazzle: lex.yy.c parser.tab.c parser.tab.h
+rabbix: lex.yy.c parser.tab.c
 	g++ parser.tab.c lex.yy.c -lfl -o rabbix

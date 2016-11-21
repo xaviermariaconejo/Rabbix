@@ -70,7 +70,7 @@ string		\"(\\.|[^\\"])*\"
 {alpha}+{alphanum}*	{ yylval.sval = strdup(yytext); return ID; }
 
 
-.		{ yylval.sval = strdup(yytext); /*return NOT_DEFINED; */}
+.		{ yylval.sval = strdup(yytext); return NOT_DEFINED; }
 \n 		{ ++line_num; }
 {ws}	{ /* nothing */ }
 "/*"	{

@@ -18,12 +18,12 @@
 	char *sval;
 }
 
-//%token 	COMMA SEMICOLON COLON ANDPERSAND OPARENTHESIS CPARENTHESIS OBRACKET CBRACKET OBRACER CBRACER
-//%token 	IF ELSE WHILE DO FOR FUNC RETURN GLOBAL
+%token 	COMMA SEMICOLON COLON ANDPERSAND OPARENTHESIS CPARENTHESIS OBRACKET CBRACKET OBRACER CBRACER NOT_DEFINED
+%token 	IF ELSE WHILE DO FOR FUNC RETURN GLOBAL
 %token 	<ival> BOOL INT
 %token  <fval> DOUBLE
 %token  <sval> STRING ID
-/*
+
 %right 	ASSIGMENT
 %left	OR
 %left	AND
@@ -31,7 +31,7 @@
 %left	PLUS MINUS
 %left	MULT DIV MOD
 %left	NEG POS NOT
-%right	POW*/
+%right	POW
 
 
 %%
@@ -94,7 +94,7 @@ int main(int, char**) {
 	// set lex to read from it instead of defaulting to STDIN:
 	yyin = myfile;
 	*/
-	
+
 	// parse through the input until there is no more:
 	
 	do {
