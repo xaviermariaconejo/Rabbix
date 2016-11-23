@@ -95,13 +95,15 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 15 "parser.y" /* yacc.c:1915  */
+#line 17 "parser.y" /* yacc.c:1915  */
 
-	int ival;
-	float fval;
-	char *sval;
+	int 	ival;
+	float 	fval;
+	char* 	sval;
 
-#line 105 "parser.tab.h" /* yacc.c:1915  */
+	void*	n;
+
+#line 107 "parser.tab.h" /* yacc.c:1915  */
 };
 
 typedef union YYSTYPE YYSTYPE;

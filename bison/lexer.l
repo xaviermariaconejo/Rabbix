@@ -10,57 +10,57 @@
 	int line_num = 0;
 %}
 
-ws			[ \r\t]+
+ws			[ \t\v\f]+
 bool		"true"|"TRUE"|"false"|"FALSE"
 dig			[0-9]
 alpha		[a-zA-Z_]
 alphanum	[a-zA-Z0-9_]
-string		\"(\\.|[^\\"])*\"
+string		(\"(\\.|[^\\"])*\"|\'(\\.|[^\\'])*\')
 
 
 %%
 
 
-"if"		return IF;
-"else"		return ELSE;
-"while"		return WHILE;
-"do"		return DO;
-"for"		return FOR;
-"function"	return FUNC;
-"return"	return RETURN;
-"global"	return GLOBAL;
+"if"		{ yylval.sval = strdup(yytext); return IF; }
+"else"		{ yylval.sval = strdup(yytext); return ELSE; }
+"while"		{ yylval.sval = strdup(yytext); return WHILE; }
+"do"		{ yylval.sval = strdup(yytext); return DO; }
+"for"		{ yylval.sval = strdup(yytext); return FOR; }
+"function"	{ yylval.sval = strdup(yytext); return FUNC; }
+"return"	{ yylval.sval = strdup(yytext); return RETURN; }
+"global"	{ yylval.sval = strdup(yytext); return GLOBAL; }
 
 
-","					return COMMA;
-";"					return SEMICOLON;
-":"					return COLON;
-"&"					return ANDPERSAND;
-"="					return ASSIGMENT;
+","					{ yylval.sval = strdup(yytext); return COMMA; }
+";"					{ yylval.sval = strdup(yytext); return SEMICOLON; }
+":"					{ yylval.sval = strdup(yytext); return COLON; }
+"&"					{ yylval.sval = strdup(yytext); return ANDPERSAND; }
+"="					{ yylval.sval = strdup(yytext); return ASSIGMENT; }
 
-"("					return OPARENTHESIS;
-")"					return CPARENTHESIS;
-"["					return OBRACKET;
-"]"					return CBRACKET;
-"{"					return OBRACER;
-"}"					return CBRACER;
+"("					{ yylval.sval = strdup(yytext); return OPARENTHESIS; }
+")"					{ yylval.sval = strdup(yytext); return CPARENTHESIS; }
+"["					{ yylval.sval = strdup(yytext); return OBRACKET; }
+"]"					{ yylval.sval = strdup(yytext); return CBRACKET; }
+"{"					{ yylval.sval = strdup(yytext); return OBRACER; }
+"}"					{ yylval.sval = strdup(yytext); return CBRACER; }
 
-"+"					return PLUS;
-"-"					return MINUS;
-"*"					return MULT;
-"/"					return DIV;
-"%"					return MOD;
-"^"					return POW;
+"+"					{ yylval.sval = strdup(yytext); return PLUS; }
+"-"					{ yylval.sval = strdup(yytext); return MINUS; }
+"*"					{ yylval.sval = strdup(yytext); return MULT; }
+"/"					{ yylval.sval = strdup(yytext); return DIV; }
+"%"					{ yylval.sval = strdup(yytext); return MOD; }
+"^"					{ yylval.sval = strdup(yytext); return POW; }
 
-"=="				return EQUAL;
-"!="				return NOT_EQUAL;
-"<"					return LT;
-"<="				return LE;
-">"					return GT;
-">="				return GE;
+"=="				{ yylval.sval = strdup(yytext); return EQUAL; }
+"!="				{ yylval.sval = strdup(yytext); return NOT_EQUAL; }
+"<"					{ yylval.sval = strdup(yytext); return LT; }
+"<="				{ yylval.sval = strdup(yytext); return LE; }
+">"					{ yylval.sval = strdup(yytext); return GT; }
+">="				{ yylval.sval = strdup(yytext); return GE; }
 
-"not"|"NOT"|"!"		return NOT;
-"and"|"AND"|"&&"	return AND;
-"or"|"OR"|"||"		return OR;
+"not"|"NOT"|"!"		{ yylval.sval = strdup(yytext); return NOT; }
+"and"|"AND"|"&&"	{ yylval.sval = strdup(yytext); return AND; }
+"or"|"OR"|"||"		{ yylval.sval = strdup(yytext); return OR; }
 
 
 {bool} 				{ yylval.sval = strdup(yytext); return BOOL; }
@@ -70,7 +70,6 @@ string		\"(\\.|[^\\"])*\"
 {alpha}+{alphanum}*	{ yylval.sval = strdup(yytext); return ID; }
 
 
-.		{ yylval.sval = strdup(yytext); return NOT_DEFINED; }
 \n 		{ ++line_num; }
 {ws}	{ /* nothing */ }
 "/*"	{
@@ -91,4 +90,5 @@ string		\"(\\.|[^\\"])*\"
 				}
 			}
 		}
+.		{ cout << "NOT DEFINED: " << yytext << endl; yylval.sval = strdup(yytext); return NOT_DEFINED; }
 %%
