@@ -1,8 +1,9 @@
-parser.tab.c parser.tab.h: parser.y
-	bison -d parser.y
+all:
+	flex -o scanner.cpp scanner.l
+	bison -o parser.cpp parser.y
+	g++ --std=c++11 main.cpp scanner.cpp parser.cpp interpreter.cpp ASTN.cpp -o a.out
 
-lex.yy.c: lexer.l parser.tab.h
-	flex lexer.l
-
-rabbix: lex.yy.c parser.tab.c
-	g++ parser.tab.c lex.yy.c -lfl -o rabbix
+clean:
+	rm -rf scanner.cpp
+	rm -rf parser.cpp parser.hpp location.hh position.hh stack.hh
+	rm -rf a.out
