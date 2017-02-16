@@ -875,17 +875,6 @@ expr:
 				$$ = n;
 			}
 	|
-		expr POW expr
-			{
-				tree<ASTN> n(ASTN(L"POW"));
-				const tree<ASTN>& expr1 = $1;
-				const tree<ASTN>& expr2 = $3;
-
-				n.add_child(expr1);
-				n.add_child(expr2);
-				$$ = n;
-			}
-	|
 		expr EQUAL expr
 			{
 				tree<ASTN> n(ASTN(L"EQUAL"));

@@ -15,6 +15,16 @@ void ASTN::clone(const ASTN& n) {
 }
 
 // constructors
+ASTN::ASTN() :
+	token(L""),
+	type(VOID)
+{ }
+
+ASTN::ASTN(const std::wstring& t) :
+	token(t),
+	type(VOID)
+{ }
+
 ASTN::ASTN(const std::wstring& t, bool value) :
 	token(t),
 	value_bool(value),
@@ -37,16 +47,6 @@ ASTN::ASTN(const std::wstring& t, const std::wstring& value) :
 	token(t),
 	value_string(value),
 	type(WSTRING)
-{ }
-
-ASTN::ASTN(const std::wstring& t) :
-	token(t),
-	type(VOID)
-{ }
-
-ASTN::ASTN() :
-	token(L""),
-	type(VOID)
 { }
 
 //copy

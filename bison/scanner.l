@@ -74,7 +74,6 @@ string		(\"(\\.|[^\\"])*\"|\'(\\.|[^\\'])*\')
 "*"					{ return ATN::Parser::make_MULT(ATN::location()); }
 "/"					{ return ATN::Parser::make_DIV(ATN::location()); }
 "%"					{ return ATN::Parser::make_MOD(ATN::location()); }
-"^"					{ return ATN::Parser::make_POW(ATN::location()); }
 
 "=="				{ return ATN::Parser::make_EQUAL(ATN::location()); }
 "!="				{ return ATN::Parser::make_NOT_EQUAL(ATN::location()); }

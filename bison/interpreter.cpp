@@ -13,8 +13,10 @@ Interpreter::Interpreter() :
     m_column(0),
     m_row(1),
     m_location(0)
-{
+{ }
 
+Interpreter::~Interpreter() {
+    clear();
 }
 
 int Interpreter::parse() {

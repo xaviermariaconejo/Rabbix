@@ -8,18 +8,19 @@ namespace ATN {
 /**
  * AST node (ASTN)
  */
-	class ASTN {
+	class ASTN
+	{
 		public:
 			// Value type
 			enum ASTtype { VOID, BOOL, INT, DOUBLE, WSTRING };
 
 			// constructors
+			ASTN();
+			ASTN(const std::wstring& token);
 			ASTN(const std::wstring& token, bool value);
 			ASTN(const std::wstring& token, int value);
 			ASTN(const std::wstring& token, double value);
 			ASTN(const std::wstring& token, const std::wstring& value);
-			ASTN(const std::wstring& token);
-			ASTN();
 
 			// copy
 			ASTN(const ASTN& astn);
@@ -65,23 +66,23 @@ namespace ATN {
 
 		private:
 	    	// auxiliary to copy, assignment, and destructor
-      		void clone(const ASTN&);
+      		void clone(const ASTN& n);
 
 			// information of the token
 			std::wstring token;
-			
+
 			// value type
 			ASTtype type;
-			
+
 			// value in case is bool
 			bool value_bool;
-			
+
 			// value in case is int
 			int value_int;
-			
+
 			// value in case is double
 			double value_double;
-			
+
 			// value in case is string
 			std::wstring value_string;
 	};
