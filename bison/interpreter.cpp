@@ -3,6 +3,7 @@
 #include <sstream>
 //#include <boost/concept_check.hpp>
 
+using namespace std;
 using namespace ATN;
 
 Interpreter::Interpreter() :
@@ -28,18 +29,73 @@ void Interpreter::clear() {
     m_list.clear();
 }
 
-std::string Interpreter::str() const {
-    std::stringstream s;
-    s << "Interpreter: " << " commands received from command line." << endl;
-    /*for(int i = 0; i < m_commands.size(); i++) {
-        s << " * " << m_commands[i].str() << endl;
-    }*/
+string Interpreter::str(wstring element) const {
+    stringstream s;
+    string elem(element.begin(), element.end());
+    s << "Interpreter: " << "Printing " << elem << " element/s" << endl << endl;
+    bool found = false;
+
+    for (auto it = m_list.begin(); it != m_list.end() && !found; ++it) {
+        freeling::tree<ASTN> t = *it;
+        freeling::tree<ASTN>::const_iterator itTree = t.begin();
+        wstring ws = (*itTree).getValueWstring();
+        string token(ws.begin(), ws.end());
+
+        if (token == elem || elem == "all") {
+            found = elem != "all";
+            s << ASTPrint(t, "").str() << endl;
+        }
+    }
+
     return s.str();
 }
 
-void Interpreter::switchInputStream(std::istream *is) {
+void Interpreter::switchInputStream(istream *is) {
     m_scanner.switch_streams(is, NULL);
     m_list.clear();    
+}
+
+stringstream Interpreter::ASTPrint(const freeling::tree<ASTN>& t, string tab) const {
+    stringstream s;
+
+    freeling::tree<ASTN>::const_iterator it = t.begin();
+    ASTN node = *it;
+    wstring ws = node.getToken();
+    s << string(ws.begin(), ws.end());
+
+    ASTN::ASTtype type = node.getType();
+    if (type == ASTN::ASTtype::BOOL) {
+        if (node.getValueBool()) {
+            s << ": TRUE";
+        }
+        else {
+            s << ": FALSE";
+        }
+    }
+    else if (type == ASTN::ASTtype::INT) {
+        s << ": " + to_string(node.getValueInt());
+    }
+    else if (type == ASTN::ASTtype::DOUBLE) {
+        s << ": " + to_string(node.getValueDouble());
+    }
+    else if (type == ASTN::ASTtype::WSTRING) {
+        ws = node.getValueWstring();
+        s << ": " + string(ws.begin(), ws.end());
+    }
+    s << endl;
+
+    tab += "     |";
+    for (int i = 0; i < t.num_children(); ++i) {
+        if (i == t.num_children() - 1) {
+            string tabAux = tab.substr(0, tab.length() - 1);
+            s << tab << endl << tabAux << "'--> " << ASTPrint(t.nth_child_ref(i), tabAux).str();
+        }
+        else {
+            s << tab << endl << tab << "--> " << ASTPrint(t.nth_child_ref(i), tab).str();            
+        }
+    }
+
+    return s;
 }
 
 void Interpreter::addMainElement(const freeling::tree<ASTN>& t)

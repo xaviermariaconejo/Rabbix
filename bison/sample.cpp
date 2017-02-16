@@ -53,6 +53,18 @@ int main() {
 
 	tree<ASTN> t(ASTN(L"TOKEN"));
 	*/
+
+	/*
 	std::list<int> l;
 	l.push_back(1);
+	*/
+
+	string s = "INFO";
+	wstring ws(s.begin(), s.end());
+	cout << "TESTING: " << s << " " << string(ws.begin(), ws.end()) << endl;
+ 	tree<ASTN> t(ASTN(L"TOKEN", wstring(s.begin(), s.end())));
+	tree<ASTN>::const_iterator it = t.begin();
+	ASTN node = *it;
+	wstring token = node.getToken();
+	cout << string(token.begin(), token.end()) << endl;
 }

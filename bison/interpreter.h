@@ -37,9 +37,9 @@ namespace ATN {
             void clear();
             
             /**
-             * Print AST
+             * Print AST, element could be the id of a global variable, function or ATN
              */
-            std::string str() const;
+            std::string str(std::wstring element = L"all") const;
             
             /**
              * Switch scanner input stream. Default is standard input (std::cin).
@@ -55,10 +55,13 @@ namespace ATN {
             friend class Scanner;
             
         private:
+            // Used internally to print the AST.
+            std::stringstream ASTPrint(const freeling::tree<ASTN>& t, string tab) const;
+
             // Used internally by Parser to insert AST nodes.            
             void addMainElement(const freeling::tree<ASTN>& t);
 
-            // Used internally by Scanner YY_USER_ACTION to update location indicator
+            // Used internally by Scanner YY_USER_ACTION to update location indicator.
             void increaseLocation(unsigned int loc);
 
             // Used internally by Scanner to update location indicator

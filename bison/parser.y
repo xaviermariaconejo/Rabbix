@@ -115,32 +115,30 @@
 
 
 // A program is a list of main elements (ATN's, states, functions, global variables)
-program 	: { cout << "INIT FIRST CASE" << endl; driver.clear(); }
+program 	: { driver.clear(); }
 			| program mainElement
 				{
-					cout << "INIT SECOND CASE" << endl;
-					const tree<ASTN>& t = $2;
-					driver.addMainElement(t);
+					driver.addMainElement($2);
 				}
 		;
 
 // A main element is an element as the type of: ATN, Function, Global variables
-mainElement	: global
-			| func
-			| atn
+mainElement	: global { $$ = $1; }
+			| func   { $$ = $1; }
+			| atn 	 { $$ = $1; }
 			;
 
 // A global variable
 global 	: GLOBAL ID SEMICOLON
 			{
-				$$ = tree<ASTN> (ASTN(L"GLOBAL", wstring($2.begin(), $2.end())));
+				$$ = tree<ASTN> (ASTN(L"GLOBAL", wstring($2.begin(), $2.end())));;
 			}
 		;
 
 // A function has a name, a list of parameters and a block of instructions	
 func	: FUNC ID params block_instructions
 			{
-				tree<ASTN> t(ASTN(L"FUNCTION",wstring($2.begin(), $2.end())));
+				tree<ASTN> t(ASTN(L"FUNCTION", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& params = $3;
 				const tree<ASTN>& body = $4;
 
@@ -195,7 +193,7 @@ param 	: ANDPERSAND ID
 // ATN
 atn 	: ATN ID OBRACER global_list function_list initials finals states CBRACER
 			{
-				tree<ASTN> t(ASTN(L"ATN",wstring($2.begin(), $2.end())));
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
 				const tree<ASTN>& funcs = $5;
 				const tree<ASTN>& init = $6;
@@ -211,7 +209,7 @@ atn 	: ATN ID OBRACER global_list function_list initials finals states CBRACER
 			}
 		| ATN ID OBRACER global_list function_list initials states finals CBRACER
 			{
-				tree<ASTN> t(ASTN(L"ATN",wstring($2.begin(), $2.end())));
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
 				const tree<ASTN>& funcs = $5;
 				const tree<ASTN>& init = $6;
@@ -227,7 +225,7 @@ atn 	: ATN ID OBRACER global_list function_list initials finals states CBRACER
 			}
 		| ATN ID OBRACER global_list function_list finals initials states CBRACER
 			{
-				tree<ASTN> t(ASTN(L"ATN",wstring($2.begin(), $2.end())));
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
 				const tree<ASTN>& funcs = $5;
 				const tree<ASTN>& init = $7;
@@ -243,7 +241,7 @@ atn 	: ATN ID OBRACER global_list function_list initials finals states CBRACER
 			}
 		| ATN ID OBRACER global_list function_list finals states initials CBRACER
 			{
-				tree<ASTN> t(ASTN(L"ATN",wstring($2.begin(), $2.end())));
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
 				const tree<ASTN>& funcs = $5;
 				const tree<ASTN>& init = $8;
@@ -259,7 +257,7 @@ atn 	: ATN ID OBRACER global_list function_list initials finals states CBRACER
 			}
 		| ATN ID OBRACER global_list function_list states initials finals CBRACER
 			{
-				tree<ASTN> t(ASTN(L"ATN",wstring($2.begin(), $2.end())));
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
 				const tree<ASTN>& funcs = $5;
 				const tree<ASTN>& init = $7;
@@ -275,7 +273,7 @@ atn 	: ATN ID OBRACER global_list function_list initials finals states CBRACER
 			}
 		| ATN ID OBRACER global_list function_list states finals initials CBRACER
 			{
-				tree<ASTN> t(ASTN(L"ATN",wstring($2.begin(), $2.end())));
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
 				const tree<ASTN>& funcs = $5;
 				const tree<ASTN>& init = $8;
@@ -471,12 +469,19 @@ instruction_list	: instruction SEMICOLON
 // The different types of instructions
 instruction
 		:	assign 			// Assignment
+				{ $$ = $1; }
 		|	ite_stmt		// if-then-else
+				{ $$ = $1; }
 		|	while_stmt		// while statement
+				{ $$ = $1; }
 		|	for_stmt		// for statement
+				{ $$ = $1; }
 		|	dowhile_stmt	// do while statement
+				{ $$ = $1; }
 		|	funcall			// Call to a procedure (no result produced)
+				{ $$ = $1; }
 		|	return_stmt		// Return statement
+				{ $$ = $1; }
 		;
 
 // Assignment

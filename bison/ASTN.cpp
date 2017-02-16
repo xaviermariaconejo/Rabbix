@@ -36,7 +36,7 @@ ASTN::ASTN(const std::wstring& t, double value) :
 ASTN::ASTN(const std::wstring& t, const std::wstring& value) :
 	token(t),
 	value_string(value),
-	type(STRING)
+	type(WSTRING)
 { }
 
 ASTN::ASTN(const std::wstring& t) :
@@ -93,36 +93,56 @@ void ASTN::setValueDouble(double d) {
 }
 
 // set string value
-void ASTN::setValueString(const std::wstring& s) {
-	type = STRING;
+void ASTN::setValueWstring(const std::wstring& s) {
+	type = WSTRING;
 	value_string = s;
 }
 
 // get token info
-std::wstring ASTN::getToken() {
+std::wstring ASTN::getToken() const {
 	return token;
 }
 
-ASTN::ASTtype ASTN::getType() {
+ASTN::ASTtype ASTN::getType() const {
 	return type;
 }
 
 // get bool value
-bool ASTN::getValueBool() {
-	return value_bool;
+bool ASTN::getValueBool() const {
+	if (type != BOOL) {
+		throw std::runtime_error("the type of the ASTN is not correct");
+	}
+	else {
+		return value_bool;
+	}
 }
 
 // get int value
-int ASTN::getValueInt() {
-	return value_int;
+int ASTN::getValueInt() const {
+	if (type != INT) {
+		throw std::runtime_error("the type of the ASTN is not correct");
+	}
+	else {
+		return value_int;
+	}
 }
 
 // get double value
-double ASTN::getValueDouble() {
-	return value_double;
+double ASTN::getValueDouble() const {
+	if (type != DOUBLE) {
+		throw std::runtime_error("the type of the ASTN is not correct");
+	}
+	else {
+		return value_double;
+	}
 }
 
 // get string value
-std::wstring ASTN::getValueString() {
-	return value_string;
+std::wstring ASTN::getValueWstring() const {
+	if (type != WSTRING) {
+		throw std::runtime_error("the type of the ASTN is not correct");
+	}
+	else {
+		return value_string;
+	}
 }
