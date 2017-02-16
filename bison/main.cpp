@@ -10,6 +10,6 @@ int main(int argc, char **argv) {
     Interpreter i;
     int res = i.parse();
     cout << "Parse complete. Result = " << res << endl << endl;
-    cout << i.str(L"main");
+    cout << i.str();
     return res;
 }

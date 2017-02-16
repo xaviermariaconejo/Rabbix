@@ -84,6 +84,9 @@ stringstream Interpreter::ASTPrint(const freeling::tree<ASTN>& t, string tab) co
     }
     s << endl;
 
+    cout << "test here" << endl;
+    cout << s.str();
+
     tab += "     |";
     for (int i = 0; i < t.num_children(); ++i) {
         if (i == t.num_children() - 1) {

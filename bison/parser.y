@@ -131,7 +131,7 @@ mainElement	: global { $$ = $1; }
 // A global variable
 global 	: GLOBAL ID SEMICOLON
 			{
-				$$ = tree<ASTN> (ASTN(L"GLOBAL", wstring($2.begin(), $2.end())));;
+				$$ = tree<ASTN> (ASTN(L"GLOBAL", wstring($2.begin(), $2.end())));
 			}
 		;
 
@@ -191,97 +191,157 @@ param 	: ANDPERSAND ID
 		;
 
 // ATN
-atn 	: ATN ID OBRACER global_list function_list initials finals states CBRACER
+atn 	: ATN ID OBRACER initials finals states CBRACER
 			{
 				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
-				const tree<ASTN>& gls = $4;
-				const tree<ASTN>& funcs = $5;
-				const tree<ASTN>& init = $6;
-				const tree<ASTN>& fin = $7;
-				const tree<ASTN>& sts = $8;
+				const tree<ASTN>& init = $4;
+				const tree<ASTN>& fin = $5;
+				const tree<ASTN>& sts = $6;
 
-				t.add_child(gls);
-				t.add_child(funcs);
 				t.add_child(init);
 				t.add_child(fin);
 				t.add_child(sts);
 				$$ = t;
 			}
-		| ATN ID OBRACER global_list function_list initials states finals CBRACER
+		| ATN ID OBRACER initials states finals CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& init = $4;
+				const tree<ASTN>& fin = $6;
+				const tree<ASTN>& sts = $5;
+
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER finals initials states CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& init = $5;
+				const tree<ASTN>& fin = $4;
+				const tree<ASTN>& sts = $6;
+
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER finals states initials CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& init = $6;
+				const tree<ASTN>& fin = $4;
+				const tree<ASTN>& sts = $5;
+
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER states initials finals CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& init = $5;
+				const tree<ASTN>& fin = $6;
+				const tree<ASTN>& sts = $4;
+
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER states finals initials CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& init = $6;
+				const tree<ASTN>& fin = $5;
+				const tree<ASTN>& sts = $4;
+
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER global_list initials finals states CBRACER
 			{
 				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
-				const tree<ASTN>& funcs = $5;
-				const tree<ASTN>& init = $6;
-				const tree<ASTN>& fin = $8;
+				const tree<ASTN>& init = $5;
+				const tree<ASTN>& fin = $6;
 				const tree<ASTN>& sts = $7;
 
 				t.add_child(gls);
-				t.add_child(funcs);
 				t.add_child(init);
 				t.add_child(fin);
 				t.add_child(sts);
 				$$ = t;
 			}
-		| ATN ID OBRACER global_list function_list finals initials states CBRACER
+		| ATN ID OBRACER global_list initials states finals CBRACER
 			{
 				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
 				const tree<ASTN>& gls = $4;
-				const tree<ASTN>& funcs = $5;
-				const tree<ASTN>& init = $7;
-				const tree<ASTN>& fin = $6;
-				const tree<ASTN>& sts = $8;
-
-				t.add_child(gls);
-				t.add_child(funcs);
-				t.add_child(init);
-				t.add_child(fin);
-				t.add_child(sts);
-				$$ = t;
-			}
-		| ATN ID OBRACER global_list function_list finals states initials CBRACER
-			{
-				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
-				const tree<ASTN>& gls = $4;
-				const tree<ASTN>& funcs = $5;
-				const tree<ASTN>& init = $8;
-				const tree<ASTN>& fin = $6;
-				const tree<ASTN>& sts = $7;
-
-				t.add_child(gls);
-				t.add_child(funcs);
-				t.add_child(init);
-				t.add_child(fin);
-				t.add_child(sts);
-				$$ = t;
-			}
-		| ATN ID OBRACER global_list function_list states initials finals CBRACER
-			{
-				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
-				const tree<ASTN>& gls = $4;
-				const tree<ASTN>& funcs = $5;
-				const tree<ASTN>& init = $7;
-				const tree<ASTN>& fin = $8;
-				const tree<ASTN>& sts = $6;
-
-				t.add_child(gls);
-				t.add_child(funcs);
-				t.add_child(init);
-				t.add_child(fin);
-				t.add_child(sts);
-				$$ = t;
-			}
-		| ATN ID OBRACER global_list function_list states finals initials CBRACER
-			{
-				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
-				const tree<ASTN>& gls = $4;
-				const tree<ASTN>& funcs = $5;
-				const tree<ASTN>& init = $8;
+				const tree<ASTN>& init = $5;
 				const tree<ASTN>& fin = $7;
 				const tree<ASTN>& sts = $6;
 
 				t.add_child(gls);
-				t.add_child(funcs);
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER global_list finals initials states CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& gls = $4;
+				const tree<ASTN>& init = $6;
+				const tree<ASTN>& fin = $5;
+				const tree<ASTN>& sts = $7;
+
+				t.add_child(gls);
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER global_list finals states initials CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& gls = $4;
+				const tree<ASTN>& init = $7;
+				const tree<ASTN>& fin = $5;
+				const tree<ASTN>& sts = $6;
+
+				t.add_child(gls);
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER global_list states initials finals CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& gls = $4;
+				const tree<ASTN>& init = $6;
+				const tree<ASTN>& fin = $7;
+				const tree<ASTN>& sts = $5;
+
+				t.add_child(gls);
+				t.add_child(init);
+				t.add_child(fin);
+				t.add_child(sts);
+				$$ = t;
+			}
+		| ATN ID OBRACER global_list states finals initials CBRACER
+			{
+				tree<ASTN> t(ASTN(L"ATN", wstring($2.begin(), $2.end())));
+				const tree<ASTN>& gls = $4;
+				const tree<ASTN>& init = $7;
+				const tree<ASTN>& fin = $6;
+				const tree<ASTN>& sts = $5;
+
+				t.add_child(gls);
 				t.add_child(init);
 				t.add_child(fin);
 				t.add_child(sts);
@@ -359,13 +419,13 @@ id_list	: ID
 		;
 
 // States of the ATN
-states 	: state SEMICOLON
+states 	: state
 			{
 				tree<ASTN> t(ASTN(L"STATES"));
 				t.add_child($1);
 				$$ = t;
 			}
-		| states state SEMICOLON
+		| states state
 			{
 				$1.add_child($2);
 				$$ = $1;
@@ -390,6 +450,20 @@ state 	: STATE ID OBRACER function_list ACTION block_instructions TRANSITION OBR
 				t.add_child(trans);
 				$$ = t;
 			}
+		| STATE ID OBRACER ACTION block_instructions TRANSITION OBRACER CBRACER CBRACER
+			{
+				tree<ASTN> t(ASTN(L"STATE", wstring($2.begin(), $2.end())));
+				
+				tree<ASTN> act(ASTN(L"ACTION"));
+				const tree<ASTN>& instr = $5;
+				act.add_child(instr);
+
+				tree<ASTN> trans(ASTN(L"TRANSITION"));
+
+				t.add_child(act);
+				t.add_child(trans);
+				$$ = t;
+			}
 		| STATE ID OBRACER function_list ACTION block_instructions TRANSITION OBRACER transition_list CBRACER CBRACER
 			{
 				tree<ASTN> t(ASTN(L"STATE", wstring($2.begin(), $2.end())));
@@ -407,27 +481,41 @@ state 	: STATE ID OBRACER function_list ACTION block_instructions TRANSITION OBR
 				t.add_child(trans);
 				$$ = t;
 			}
+		| STATE ID OBRACER ACTION block_instructions TRANSITION OBRACER transition_list CBRACER CBRACER
+			{
+				tree<ASTN> t(ASTN(L"STATE", wstring($2.begin(), $2.end())));
+				
+				tree<ASTN> act(ASTN(L"ACTION"));
+				const tree<ASTN>& instr = $5;
+				act.add_child(instr);
+
+				tree<ASTN> trans = $8;
+
+				t.add_child(act);
+				t.add_child(trans);
+				$$ = t;
+			}
 		;
 
 // List of transitions
-transition_list 	: TO ID IF expr
+transition_list 	: TO ID IF OPARENTHESIS expr CPARENTHESIS SEMICOLON
 						{
 							tree<ASTN> t(ASTN(L"TRANSITION"));
 							tree<ASTN> trans(ASTN(L"TO"));
 							tree<ASTN> id(ASTN(L"ID", wstring($2.begin(), $2.end())));
-							const tree<ASTN>& cond = $4;
+							const tree<ASTN>& cond = $5;
 
 							trans.add_child(id);
 							trans.add_child(cond);
 							t.add_child(trans);
 							$$ = t;
 						}
-					| transition_list TO ID IF expr
+					| transition_list TO ID IF OPARENTHESIS expr CPARENTHESIS SEMICOLON
 						{
 							tree<ASTN> t = $1;
 							tree<ASTN> trans(ASTN(L"TO"));
 							tree<ASTN> id(ASTN(L"ID", wstring($3.begin(), $3.end())));
-							const tree<ASTN>& cond = $5;
+							const tree<ASTN>& cond = $6;
 
 							trans.add_child(id);
 							trans.add_child(cond);
@@ -448,7 +536,7 @@ block_instructions	: OBRACER CBRACER
 					;
 
 // The list of instructions
-instruction_list	: instruction SEMICOLON
+instruction_list	: instruction
 						{
 							tree<ASTN> body(ASTN(L"BODY"));
 							const tree<ASTN>& instruction = $1;
@@ -456,7 +544,7 @@ instruction_list	: instruction SEMICOLON
 							body.add_child(instruction);
 							$$ = body;
 						}
-					| instruction_list instruction SEMICOLON
+					| instruction_list instruction
 						{
 							tree<ASTN>& body = $1;
 							const tree<ASTN>& instruction = $2;
@@ -468,19 +556,19 @@ instruction_list	: instruction SEMICOLON
 
 // The different types of instructions
 instruction
-		:	assign 			// Assignment
+		:	assign SEMICOLON 		// Assignment
 				{ $$ = $1; }
-		|	ite_stmt		// if-then-else
+		|	ite_stmt				// if-then-else
 				{ $$ = $1; }
-		|	while_stmt		// while statement
+		|	while_stmt				// while statement
 				{ $$ = $1; }
-		|	for_stmt		// for statement
+		|	for_stmt				// for statement
 				{ $$ = $1; }
-		|	dowhile_stmt	// do while statement
+		|	dowhile_stmt			// do while statement
 				{ $$ = $1; }
-		|	funcall			// Call to a procedure (no result produced)
+		|	funcall	SEMICOLON		// Call to a procedure (no result produced)
 				{ $$ = $1; }
-		|	return_stmt		// Return statement
+		|	return_stmt	SEMICOLON 	// Return statement
 				{ $$ = $1; }
 		;
 
@@ -596,7 +684,7 @@ while_stmt	: WHILE OPARENTHESIS expr CPARENTHESIS block_instructions
 			;
 
 // for statement
-for_stmt	: FOR OPARENTHESIS expr SEMICOLON expr SEMICOLON expr CPARENTHESIS block_instructions
+for_stmt	: FOR OPARENTHESIS assign SEMICOLON expr SEMICOLON assign CPARENTHESIS block_instructions
 				{
 					tree<ASTN> t(ASTN(L"FOR"));
 					const tree<ASTN>& init = $3;
