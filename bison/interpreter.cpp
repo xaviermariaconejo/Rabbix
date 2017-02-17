@@ -31,24 +31,13 @@ void Interpreter::clear() {
     m_list.clear();
 }
 
-string Interpreter::str(wstring element) const {
+string Interpreter::str() const {
     stringstream s;
-    string elem(element.begin(), element.end());
-    s << "Interpreter: " << "Printing " << elem << " element/s" << endl << endl;
-    bool found = false;
-
-    for (auto it = m_list.begin(); it != m_list.end() && !found; ++it) {
+    s << "Interpreter: Printing all elements" << endl << endl;
+    for (auto it = m_list.begin(); it != m_list.end(); ++it) {
         freeling::tree<ASTN> t = *it;
-        freeling::tree<ASTN>::const_iterator itTree = t.begin();
-        wstring ws = (*itTree).getValueWstring();
-        string token(ws.begin(), ws.end());
-
-        if (token == elem || elem == "all") {
-            found = elem != "all";
-            s << ASTPrint(t, "").str() << endl;
-        }
+        s << ASTPrint(t, "").str() << endl;
     }
-
     return s.str();
 }
 
@@ -85,9 +74,6 @@ stringstream Interpreter::ASTPrint(const freeling::tree<ASTN>& t, string tab) co
         s << ": " + string(ws.begin(), ws.end());
     }
     s << endl;
-
-    cout << "test here" << endl;
-    cout << s.str();
 
     tab += "     |";
     for (int i = 0; i < t.num_children(); ++i) {

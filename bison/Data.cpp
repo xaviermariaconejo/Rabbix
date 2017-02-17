@@ -1,5 +1,7 @@
 #include "Data.h"
 
+#include <assert.h>
+
 using namespace std;
 using namespace ATN;
 
@@ -65,9 +67,9 @@ void Data::clone(const Data& n) {
 	type = n.type;
 	value_bool = n.value_bool;
 	value_double = n.value_double;
-	value_wstring = n.value_wstring;
-	value_array = n.value_array;
-	value_map = n.value_map;
+	value_wstring(n.value_wstring);
+	value_array(n.value_array);
+	value_map(n.value_map);
 }
 
 Data::~Data() {
@@ -120,37 +122,77 @@ bool Data::isMap() {
 }
 			
 bool Data::getBoolValue() const {
-	assert type == BOOL;
+	assert(type == BOOL);
     return value_bool;
 }
 
 double Data::getDoubleValue() const {
-	assert type == DOUBLE;
+	assert(type == DOUBLE);
     return value_double;
 }
 
 std::wstring Data::getWstringValue() const {
-	assert type == WSTRING;
+	assert(type == WSTRING);
     return value_wstring;
 }
 
 std::vector<Data>& Data::getArrayValue() const {
-	assert type == ARRAY;
+	assert(type == ARRAY);
     return value_array;
 }
 
 const std::vector<Data>& Data::getArrayValue() const {
-	assert type == ARRAY;
+	assert(type == ARRAY);
     return value_array;
 }
 
+Data& Data::getArrayValue(int i) const {
+
+}
+
+const Data& Data::getArrayValue(int i) const {
+
+}
+
+Data& Data::getIndexOfArray(const Data& d) const {
+
+}
+
+const Data& Data::getIndexOfArray(const Data& d) const {
+
+}
+
+int Data::getSizeArray() const {
+
+}
+
 std::map<std::wstring, Data>& Data::getMapValue() const {
-	assert type == MAP;
+	assert(type == MAP);
 	return value_map;
 }
 const std::map<std::wstring, Data>& Data::getMapValue() const {
-	assert type == MAP;
+	assert(type == MAP);
 	return value_map;
+}
+
+Data& Data::getMapValue(std::wstring ws) const {
+
+}
+
+const Data::Data& getMapValue(std::wstring ws) const {
+
+}
+
+Data& Data::getMapValue(int i) const {
+
+}
+
+const Data::Data& getMapValue(int i) const {
+
+}
+
+int Data::getSizeMap() const {
+
 }
 
 void Data::setBoolValue(bool b) {
@@ -173,30 +215,50 @@ void Data::setArrayValue(const vector<Data>& v) {
 	value_array = v;
 }
 
+void Data::addArrayValue(const Data& d) {
+
+}
+
+void Data::addArrayValue(int i, const Data& d) {
+
+}
+
+void Data::deleteArrayValue(int i) {
+
+}
+
 void Data::setMapValue(const map<wstring, Data>& m) {
 	type = MAP;
 	value_map = m;
 }
 
+void Data::addMapValue(std::wstring ws, const Data& d) {
+
+}
+
+void Data::deleteMapValue(std::wstring ws) {
+
+}
+
 wstring Data::toString() const {
-	assert type != VOID && type != ARRAY && type != MAP;
+	assert(type != VOID && type != ARRAY && type != MAP);
 	switch (type) {
 		case BOOL: return value_bool ? L"TRUE" : L"FALSE";
 		case DOUBLE: return to_wstring(value_double);
 		case WSTRING: return value_wstring;
-		default: assert false;
+		default: assert(false);
 	}
 }
 
 void Data::evaluateArithmetic (wstring op, const Data& d) {
-	assert type == DOUBLE && d.type == DOUBLE;
+	assert(type == DOUBLE && d.type == DOUBLE);
     switch (op) {
         case L"PLUS": value_double += d.value_double; break;
         case L"MINUS": value_double -= d.value_double; break;
         case L"MUL": value_double *= d.value_double; break;
         case L"DIV": checkDivZero(d); value_double /= d.value_double; break;
         case L"MOD": checkDivZero(d); value_double %= d.value_double; break;
-        default: assert false;
+        default: assert(false);
     }
 }
 
@@ -205,7 +267,7 @@ void Data::checkDivZero(const Data& d) {
 }
 
 Data& Data::evaluateRelational (wstring op, Data d) {
-	assert type != VOID && type != ARRAY && type != MAP && type == d.type;
+	assert(type != VOID && type != ARRAY && type != MAP && type == d.type);
 	if (type == BOOL) value_wstring = value_bool ? L"1" : L"0"; 
 	if (type == DOUBLE) value_wstring = to_wstring(value_double);
 	if (type == BOOL || type == DOUBLE || type == WSTRING) {
@@ -216,13 +278,13 @@ Data& Data::evaluateRelational (wstring op, Data d) {
         case L"LE": return new Data(value_wstring <= d.value_wstring);
         case L"GT": return new Data(value_wstring > d.value_wstring);
         case L"GE": return new Data(value_wstring >= d.value_wstring);
-        default: assert false; 
+        default: assert(false;) 
     }
     return null;
 }
 
 const Data& Data::evaluateRelational (wstring op, Data d) {
-	assert type != VOID && type != ARRAY && type != MAP && type == d.type;
+	assert(type != VOID && type != ARRAY && type != MAP && type == d.type);
 	if (type == BOOL) value_wstring = value_bool ? L"1" : L"0"; 
 	if (type == DOUBLE) value_wstring = to_wstring(value_double);
 	if (type == BOOL || type == DOUBLE || type == WSTRING) {
@@ -233,8 +295,7 @@ const Data& Data::evaluateRelational (wstring op, Data d) {
 	    case L"LE": return new Data(value_wstring <= d.value_wstring);
 	    case L"GT": return new Data(value_wstring > d.value_wstring);
 	    case L"GE": return new Data(value_wstring >= d.value_wstring);
-	    default: assert false; 
+	    default: assert(false;) 
 	}
 	return null;
 }
-

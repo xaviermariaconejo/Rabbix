@@ -1,7 +1,7 @@
 #ifndef STACK_H
 #define STACK_H
 
-#include <queue>
+#include <stack>
 #include <map>
 
 #include "Data.h"
@@ -16,6 +16,24 @@ namespace ATN {
 	class Stack
 	{
 		public:
+		    /**
+		     * Class to represent an item of the Stack trace.
+		     * For each function call, the function name and
+		     * the line number of the call are stored.
+		     */
+		    class StackTraceItem {
+		        public:
+		        	std::wstring fname; // Function name
+		        	int line; // Line number
+		        
+		        	// constructors
+		        	StackTraceItem() { }
+		        	StackTraceItem(std::wstring name, int l) :
+		        		fname(name),
+		        		line(l)
+		        	{ }
+		    }
+
 			// constructor
 			Stack();
 
@@ -32,7 +50,7 @@ namespace ATN {
 			void clear();
 
 		    // creates a new activation record on the top of the stack
-		    void pushActivationRecord();
+		    void pushActivationRecord(std::wstring name, int line);
 
 		    // destroys the current activation record
 		    void popActivationRecord();
@@ -49,12 +67,32 @@ namespace ATN {
 		    Data& getVariable(std::wstring name) const;
 		    const Data& getVariable(std::wstring name) const;
 
+		    /**
+		     * Generates a wstring with the contents of the stack trace.
+		     * Each line contains a function name and the line number where
+		     * the next function is called. Finally, the line number in
+		     * the current function is written.
+		     */ 
+		    std::wstring getStackTrace(int current_line);
+
+		    /**
+		     * Generates a string with a summarized contents of the stack trace.
+		     * Only the first and last items of the stack trace are returned.
+		     */ 
+		    std::wstring getStackTrace(int current_line, int nitems);
+
 		private:
+	    	// auxiliary to copy, assignment, and destructor
+      		void clone(const Stack& stack);
+
     		// Stack of activation records
-		    std::queue< std::map<std::wstring, Data> > m_stack;
+		    std::stack< std::map<std::wstring, Data> > m_stack;
 		    
 		    // Reference to the current activation record
 		    std::map<std::wstring, Data> m_current;
+
+    		// Stack trace to keep track of function calls
+		    std::stack<StackTraceItem> m_trace;
 	};
 }
 

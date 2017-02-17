@@ -1,6 +1,9 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
+//#include "Stack.h"
+//#include "Data.h"
+
 #include <list>
 #include "tree.h"
 #include "ASTN.h"
@@ -40,7 +43,7 @@ namespace ATN {
             /**
              * Print AST, element could be the id of a global variable, function or ATN
              */
-            std::string str(std::wstring element = L"all") const;
+            std::string str() const;
             
             /**
              * Switch scanner input stream. Default is standard input (std::cin).

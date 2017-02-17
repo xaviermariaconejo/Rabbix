@@ -45,6 +45,7 @@ string		(\"(\\.|[^\\"])*\"|\'(\\.|[^\\'])*\')
 "add"				{ return ATN::Parser::make_ADD(ATN::location()); }
 "remove"			{ return ATN::Parser::make_REMOVE(ATN::location()); }
 "indexOf"			{ return ATN::Parser::make_INDEXOF(ATN::location()); }
+"size"				{ return ATN::Parser::make_SIZE(ATN::location()); }
 "global"			{ return ATN::Parser::make_GLOBAL(ATN::location()); }
 
 "atn"|"ATN"															{ return ATN::Parser::make_ATN(ATN::location()); }

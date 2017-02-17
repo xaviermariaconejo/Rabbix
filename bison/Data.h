@@ -88,11 +88,41 @@ namespace ATN {
 			const std::vector<Data>& getArrayValue() const;
 
 			/**
+			 * Gets the value of an element of the array data.
+			 */
+			Data& getArrayValue(int i) const;
+			const Data& getArrayValue(int i) const;
+
+			/**
+			 * Gets the index of the value of an element of the array data.
+			 */
+			Data& getIndexOfArray(const Data& d) const;
+			const Data& getIndexOfArray(const Data& d) const;
+
+			/**
+			 * Gets the size of the array
+			 */
+			int getSizeArray() const;
+
+			/**
 		     * Gets the value of an map data. The method asserts that
 		     * the data is an map.
 		     */
 			std::map<std::wstring, Data>& getMapValue() const;
 			const std::map<std::wstring, Data>& getMapValue() const;
+
+			/**
+			 * Gets the value of an element of the map data.
+			 */
+			Data& getMapValue(std::wstring ws) const;
+			const Data& getMapValue(std::wstring ws) const;
+			Data& getMapValue(int i) const;
+			const Data& getMapValue(int i) const;
+
+			/**
+			 * Gets the size of the map
+			 */
+			int getSizeMap() const;
 
 		    // Defines a bool value for the data
 			void setBoolValue(bool b);
@@ -106,8 +136,23 @@ namespace ATN {
 		    // Defines a array value for the data
 			void setArrayValue(const std::vector<Data>& v);
 
+			// Set an element at the last position of the array
+			void addArrayValue(const Data& d);
+
+			// Set an element at the position p of the array
+			void addArrayValue(int i, const Data& d);
+
+			// Delete an element at the position i of the map
+			void deleteArrayValue(int i);
+
 		    // Defines a map value for the data
 			void setMapValue(const std::map<std::wstring, Data>& m);
+
+			// Set an element of the map
+			void addMapValue(std::wstring ws, const Data& d);
+
+			// Delete an element at position i of the array
+			void deleteMapValue(std::wstring ws);
 
 		    // Returns a string representing the data in textual form.
 			std::wstring toString() const;
