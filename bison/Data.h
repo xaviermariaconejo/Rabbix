@@ -19,11 +19,12 @@ namespace ATN {
 	{
 		public:
 			// value type
-			enum DataType { VOID, BOOL, DOUBLE, WSTRING, ARRAY, MAP };
+			enum DataType { VOID, BOOL, INT, DOUBLE, WSTRING, ARRAY, MAP };
 
 			// constructors
 			Data();
 			Data(bool b);
+			Data(int n);
 			Data(double x);
 			Data(std::wstring ws);
 			Data(const std::vector<Data>& v);
@@ -42,31 +43,43 @@ namespace ATN {
 			void clear();
 
 		    // Returns the type of data
-    		DataType getType();
+    		DataType getType() const;
+
+    		// Indicates if are equals
+    		bool equals(const Data& d) const;
 
 		    // Indicates whether the data is void
-			bool isVoid();
+			bool isVoid() const;
 
 		    // Indicates whether the data is bool
-			bool isBool();
+			bool isBool() const;
+
+		    // Indicates whether the data is int
+			bool isInt() const;
 
 		    // Indicates whether the data is double
-			bool isDouble();
+			bool isDouble() const;
 
 		    // Indicates whether the data is wstring
-			bool isWstring();
+			bool isWstring() const;
 
 		    // Indicates whether the data is array
-			bool isArray();
+			bool isArray() const;
 		
 		    // Indicates whether the data is map
-			bool isMap();
+			bool isMap() const;
 			
 			/**
 		     * Gets the value of an bool data. The method asserts that
 		     * the data is an bool.
 		     */
 			bool getBoolValue() const;
+
+			/**
+		     * Gets the value of an int data. The method asserts that
+		     * the data is an int.
+		     */
+			int getIntValue() const;
 
 			/**
 		     * Gets the value of an double data. The method asserts that
@@ -84,20 +97,17 @@ namespace ATN {
 		     * Gets the value of an array data. The method asserts that
 		     * the data is an array.
 		     */
-			std::vector<Data>& getArrayValue() const;
 			const std::vector<Data>& getArrayValue() const;
 
 			/**
 			 * Gets the value of an element of the array data.
 			 */
-			Data& getArrayValue(int i) const;
 			const Data& getArrayValue(int i) const;
 
 			/**
 			 * Gets the index of the value of an element of the array data.
 			 */
-			Data& getIndexOfArray(const Data& d) const;
-			const Data& getIndexOfArray(const Data& d) const;
+			int getIndexOfArray(const Data& d) const;
 
 			/**
 			 * Gets the size of the array
@@ -108,15 +118,12 @@ namespace ATN {
 		     * Gets the value of an map data. The method asserts that
 		     * the data is an map.
 		     */
-			std::map<std::wstring, Data>& getMapValue() const;
 			const std::map<std::wstring, Data>& getMapValue() const;
 
 			/**
 			 * Gets the value of an element of the map data.
 			 */
-			Data& getMapValue(std::wstring ws) const;
-			const Data& getMapValue(std::wstring ws) const;
-			Data& getMapValue(int i) const;
+			const Data& getMapValue(std::wstring ws);
 			const Data& getMapValue(int i) const;
 
 			/**
@@ -126,6 +133,9 @@ namespace ATN {
 
 		    // Defines a bool value for the data
 			void setBoolValue(bool b);
+
+		    // Defines a int value for the data
+			void setIntValue(int n);
 
 		    // Defines a double value for the data
 			void setDoubleValue(double d);
@@ -161,8 +171,7 @@ namespace ATN {
 		    void evaluateArithmetic (std::wstring op, const Data& d);
 
 	        // Evaluation of expressions with relational operators.
-			Data& evaluateRelational (std::wstring op, Data d);
-			const Data& evaluateRelational (std::wstring op, Data d);
+			Data evaluateRelational (std::wstring op, Data d);
 
 		private:
 		    /**
@@ -179,11 +188,12 @@ namespace ATN {
 
 			// The value of the data
 			bool value_bool;
+			int value_int;
 			double value_double;
 			std::wstring value_wstring;
 			std::vector<Data> value_array;
 			std::map<std::wstring, Data> value_map;
-    }
+    };
 }
 
 #endif 	//DATA_H

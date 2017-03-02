@@ -69,6 +69,7 @@
 %token CBRACER "close bracer";
 %token NOT_DEFINED "not defined";
 
+%token PRINT "print";
 %token IF "if";
 %token ELSE "else";
 %token WHILE "while";
@@ -99,15 +100,15 @@
 %left	OR
 %left	AND
 %left	EQUAL NOT_EQUAL LT LE GT GE
-%left	PLUS MINUS DOUBLEPLUS DOUBLEMINUS
+%left	PLUS MINUS DPLUS DMINUS
 %left	MULT DIV MOD
 %left	NEG POS NOT
 %right	POW
 
 %type < freeling::tree<ATN::ASTN>* > mainElement global func param_list param block_instructions;
 %type < freeling::tree<ATN::ASTN>* > atn global_list initials finals id_list states state transition_list;
-%type < freeling::tree<ATN::ASTN>* > instruction_list instruction assign ite_stmt else_if else;
-%type < freeling::tree<ATN::ASTN>* > while_stmt for_stmt dowhile_stmt return_stmt expr funcall expr_list object_list;
+%type < freeling::tree<ATN::ASTN>* > instruction_list instruction assign ite_stmt else_if else double_arithmetic;
+%type < freeling::tree<ATN::ASTN>* > while_stmt for_stmt incremental dowhile_stmt return_stmt print_stmt expr funcall expr_list object_list;
 
 %start program
 
@@ -119,7 +120,22 @@
 program 	: { driver.clear(); }
 			| program mainElement
 				{
-					driver.addMainElement(*$2);
+					tree<ASTN>* t = $2;
+					tree<ASTN>::const_iterator it = t->begin();
+					ASTN node = *it;
+					wstring token = node.getToken();
+
+					if (token == L"FUNCTION" || token == L"ATN") {
+						driver.addMainElement(node.getValueWstring(), *t);
+					}
+					else { // token == L"GLOBAL"
+						for (int i = 0; i < (*t).num_children(); ++i) {
+							tree<ASTN> tr = it.nth_child_ref(i);
+							tree<ASTN>::const_iterator aux = tr.begin();
+							node = *aux;
+							driver.addMainElement(node.getValueWstring(), tr);
+						}
+					}					
 				}
 		;
 
@@ -133,7 +149,7 @@ mainElement	: global SEMICOLON 	{ $$ = $1; }
 global 	: GLOBAL ID 
 			{
 				tree<ASTN>* t = new tree<ASTN>(ASTN(L"GLOBAL"));
-				tree<ASTN>* id = new tree<ASTN>(ASTN(L"ID", wstring($2.begin(), $2.end())));
+				tree<ASTN>* id = new tree<ASTN>(ASTN(L"GLOBAL ID", wstring($2.begin(), $2.end())));
 
 				(*t).add_child(*id);
 				$$ = t;
@@ -141,7 +157,7 @@ global 	: GLOBAL ID
 		| global COMMA ID
 			{
 				tree<ASTN>* t = $1;
-				tree<ASTN>* id = new tree<ASTN>(ASTN(L"ID", wstring($3.begin(), $3.end())));
+				tree<ASTN>* id = new tree<ASTN>(ASTN(L"GLOBAL ID", wstring($3.begin(), $3.end())));
 
 				(*t).add_child(*id);
 				$$ = t;
@@ -440,19 +456,23 @@ instruction_list	: // nothing
 
 // The different types of instructions
 instruction
-		:	assign SEMICOLON 		// Assignment
+		:	assign SEMICOLON 				// Assignment
 				{ $$ = $1; }
-		|	ite_stmt				// if-then-else
+		|	ite_stmt						// if-then-else
 				{ $$ = $1; }
-		|	while_stmt				// while statement
+		|	while_stmt						// while statement
 				{ $$ = $1; }
-		|	for_stmt				// for statement
+		|	for_stmt						// for statement
 				{ $$ = $1; }
-		|	dowhile_stmt			// do while statement
+		|	dowhile_stmt					// do while statement
 				{ $$ = $1; }
-		|	funcall	SEMICOLON		// Call to a procedure (no result produced)
+		|	funcall	SEMICOLON				// Call to a procedure (no result produced)
 				{ $$ = $1; }
-		|	return_stmt	SEMICOLON 	// Return statement
+		|	return_stmt	SEMICOLON 			// Return statement
+				{ $$ = $1; }
+		|	double_arithmetic SEMICOLON 	// Double plus or double minus 
+				{ $$ = $1; }
+		|	print_stmt SEMICOLON 			// Print statement
 				{ $$ = $1; }
 		;
 
@@ -568,7 +588,7 @@ while_stmt	: WHILE OPARENTHESIS expr CPARENTHESIS block_instructions
 			;
 
 // for statement
-for_stmt	: FOR OPARENTHESIS assign SEMICOLON expr SEMICOLON assign CPARENTHESIS block_instructions
+for_stmt	: FOR OPARENTHESIS assign SEMICOLON expr SEMICOLON incremental CPARENTHESIS block_instructions
 				{
 					tree<ASTN>* t = new tree<ASTN>(ASTN(L"FOR"));
 					tree<ASTN>* init = $3;
@@ -582,7 +602,26 @@ for_stmt	: FOR OPARENTHESIS assign SEMICOLON expr SEMICOLON assign CPARENTHESIS 
 					(*t).add_child(*body);
 					$$ = t;
 				}
+			| FOR OPARENTHESIS expr SEMICOLON instruction CPARENTHESIS block_instructions
+				{
+					tree<ASTN>* t = new tree<ASTN>(ASTN(L"FOR"));
+					tree<ASTN>* condition = $3;
+					tree<ASTN>* final = $5;
+					tree<ASTN>* body = $7;
+
+					(*t).add_child(*condition);
+					(*t).add_child(*final);
+					(*t).add_child(*body);
+					$$ = t;
+				}
 			;
+
+// assigment or expr
+incremental 	: assign
+					{ $$ = $1; }
+				| double_arithmetic
+					{ $$ = $1; }
+				;
 
 // dowhile statement
 dowhile_stmt	: DO block_instructions WHILE OPARENTHESIS expr CPARENTHESIS
@@ -611,12 +650,22 @@ return_stmt	: RETURN
 				}
 			;
 
+// Print statement
+print_stmt 	: PRINT expr
+				{
+					tree<ASTN>* t = new tree<ASTN>(ASTN(L"PRINT"));
+					tree<ASTN>* e = $2;
+
+					(*t).add_child(*e);
+					$$ = t;
+				}
+			;
+
 // Simple expression
 expr: BOOL
 		{
 			bool b = $1 == "true" || $1 == "TRUE";
-			$$ = new tree<ASTN>(
-				ASTN(L"TOKEN BOOL", b));
+			$$ = new tree<ASTN>(ASTN(L"TOKEN BOOL", b));
 		}
 	| INT
 		{
@@ -690,6 +739,8 @@ expr: BOOL
 			(*n).add_child(*expr);
 			$$ = n;
 		}
+	| double_arithmetic
+		{ $$ = $1; }
 	| expr PLUS expr
 		{
 			tree<ASTN>* n = new tree<ASTN>(ASTN(L"PLUS"));
@@ -891,6 +942,41 @@ expr: BOOL
 			$$ = n;
 		}
 	;
+
+// double plus or double minus
+double_arithmetic 	: DPLUS expr
+						{
+							tree<ASTN>* n = new tree<ASTN>(ASTN(L"DPLUS"));
+							tree<ASTN>* e = $2;
+
+							(*n).add_child(*e);
+							$$ = n;
+						}
+					| expr DPLUS
+						{
+							tree<ASTN>* n = new tree<ASTN>(ASTN(L"DPLUSR"));
+							tree<ASTN>* e = $1;
+
+							(*n).add_child(*e);
+							$$ = n;
+						}
+					| DMINUS expr
+						{
+							tree<ASTN>* n = new tree<ASTN>(ASTN(L"DMINUS"));
+							tree<ASTN>* e = $2;
+
+							(*n).add_child(*e);
+							$$ = n;
+						}
+					| expr DMINUS
+						{
+							tree<ASTN>* n = new tree<ASTN>(ASTN(L"DMINUSR"));
+							tree<ASTN>* e = $1;
+
+							(*n).add_child(*e);
+							$$ = n;
+						}
+					;
 
 // A function call has a lits of arguments in parenthesis (possibly empty)
 funcall : ID OPARENTHESIS expr_list CPARENTHESIS

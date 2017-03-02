@@ -1,7 +1,7 @@
 all:
 	flex -o scanner.cpp scanner.l
 	bison -o parser.cpp parser.y
-	g++ --std=c++11 main.cpp scanner.cpp parser.cpp interpreter.cpp ASTN.cpp -o a.out
+	g++ --std=c++11 main.cpp scanner.cpp parser.cpp interpreter.cpp ASTN.cpp Data.cpp -o a.out
 
 clean:
 	rm -rf scanner.cpp

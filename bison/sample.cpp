@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <map>
+#include "Data.h"
 #include "ASTN.h"
 #include "tree.h"
 
@@ -59,6 +61,7 @@ int main() {
 	l.push_back(1);
 	*/
 
+	/*
 	string s = "INFO";
 	wstring ws(s.begin(), s.end());
 	cout << "TESTING: " << s << " " << string(ws.begin(), ws.end()) << endl;
@@ -67,4 +70,14 @@ int main() {
 	ASTN node = *it;
 	wstring token = node.getToken();
 	cout << string(token.begin(), token.end()) << endl;
+	*/
+
+	wstring a = L"A";
+	wstring b = L"z";
+	if (a <  b) cout << "YES" << endl;
+	else cout << "NO" << endl;
+
+	map<wstring, int> m;
+	m[L"HI"] = 2;
+	cout << "YEY " << m[L"HI"] << endl; 
 }

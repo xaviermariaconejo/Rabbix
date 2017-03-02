@@ -1,0 +1,10 @@
+function main() {
+	for (i = 0; i < 5; ++i) {
+		if (i < 3) {
+			print "hi there";
+		}
+		else {
+			i++;
+		}
+	}
+}

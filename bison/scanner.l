@@ -35,6 +35,7 @@ string		(\"(\\.|[^\\"])*\"|\'(\\.|[^\\'])*\')
 %%
 
 
+"print"				{ return ATN::Parser::make_PRINT(ATN::location()); }
 "if"				{ return ATN::Parser::make_IF(ATN::location()); }
 "else"				{ return ATN::Parser::make_ELSE(ATN::location()); }
 "while"				{ return ATN::Parser::make_WHILE(ATN::location()); }
@@ -75,6 +76,9 @@ string		(\"(\\.|[^\\"])*\"|\'(\\.|[^\\'])*\')
 "*"					{ return ATN::Parser::make_MULT(ATN::location()); }
 "/"					{ return ATN::Parser::make_DIV(ATN::location()); }
 "%"					{ return ATN::Parser::make_MOD(ATN::location()); }
+"++"				{ return ATN::Parser::make_DPLUS(ATN::location()); }
+"--"				{ return ATN::Parser::make_DPLUS(ATN::location()); }
+
 
 "=="				{ return ATN::Parser::make_EQUAL(ATN::location()); }
 "!="				{ return ATN::Parser::make_NOT_EQUAL(ATN::location()); }

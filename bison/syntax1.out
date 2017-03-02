@@ -1,0 +1,142 @@
+Parse complete. Result = 0
+
+Interpreter: Printing all elements
+
+GLOBAL
+     |
+     '--> ID: a
+
+GLOBAL
+     |
+     '--> ID: B
+
+FUNCTION: main
+     |
+     |--> PARAM LIST
+     |
+     '--> BODY
+
+FUNCTION: aux
+     |
+     |--> PARAM LIST
+     |
+     '--> BODY
+          |
+          |--> ASSIGMENT
+          |     |
+          |     |--> TOKEN ID: a
+          |     |
+          |     '--> PLUS
+          |          |
+          |          |--> MULT
+          |          |     |
+          |          |     |--> TOKEN INT: 2
+          |          |     |
+          |          |     '--> TOKEN INT: 3
+          |          |
+          |          '--> DIV
+          |               |
+          |               |--> TOKEN INT: 4
+          |               |
+          |               '--> TOKEN INT: 6
+          |
+          |--> IF ELSE IF ELSE
+          |     |
+          |     |--> GT
+          |     |     |
+          |     |     |--> TOKEN ID: a
+          |     |     |
+          |     |     '--> TOKEN INT: 5
+          |     |
+          |     |--> BODY
+          |     |     |
+          |     |     '--> ASSIGMENT
+          |     |          |
+          |     |          |--> TOKEN ID: s
+          |     |          |
+          |     |          '--> TOKEN STRING: "do stuff"
+          |     |
+          |     |--> ELSE IF
+          |     |     |
+          |     |     |--> OR
+          |     |     |     |
+          |     |     |     |--> GT
+          |     |     |     |     |
+          |     |     |     |     |--> TOKEN ID: a
+          |     |     |     |     |
+          |     |     |     |     '--> TOKEN INT: 10
+          |     |     |     |
+          |     |     |     '--> AND
+          |     |     |          |
+          |     |     |          |--> LT
+          |     |     |          |     |
+          |     |     |          |     |--> TOKEN ID: a
+          |     |     |          |     |
+          |     |     |          |     '--> TOKEN INT: 6
+          |     |     |          |
+          |     |     |          '--> OR
+          |     |     |               |
+          |     |     |               |--> TOKEN BOOL: TRUE
+          |     |     |               |
+          |     |     |               '--> TOKEN BOOL: FALSE
+          |     |     |
+          |     |     |--> BODY
+          |     |     |     |
+          |     |     |     '--> ASSIGMENT
+          |     |     |          |
+          |     |     |          |--> TOKEN ID: a
+          |     |     |          |
+          |     |     |          '--> TOKEN STRING: "something"
+          |     |     |
+          |     |     |--> TOKEN BOOL: FALSE
+          |     |     |
+          |     |     '--> BODY
+          |     |          |
+          |     |          '--> ASSIGMENT
+          |     |               |
+          |     |               |--> TOKEN ID: a
+          |     |               |
+          |     |               '--> PLUS
+          |     |                    |
+          |     |                    |--> TOKEN INT: 3
+          |     |                    |
+          |     |                    '--> TOKEN INT: 3
+          |     |
+          |     '--> ELSE
+          |          |
+          |          '--> BODY
+          |               |
+          |               '--> FUNCALL: func
+          |                    |
+          |                    '--> EXPR LIST
+          |
+          '--> DO WHILE
+               |
+               |--> BODY
+               |     |
+               |     '--> ASSIGMENT
+               |          |
+               |          |--> TOKEN ID: b
+               |          |
+               |          '--> MULT
+               |               |
+               |               |--> TOKEN INT: 3
+               |               |
+               |               '--> TOKEN INT: 3
+               |
+               '--> TOKEN BOOL: TRUE
+
+FUNCTION: f
+     |
+     |--> PARAM LIST
+     |
+     '--> BODY
+          |
+          '--> RETURN
+               |
+               '--> PLUS
+                    |
+                    |--> TOKEN INT: 2
+                    |
+                    '--> TOKEN INT: 2
+
