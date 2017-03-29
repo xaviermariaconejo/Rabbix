@@ -16,6 +16,7 @@
     #include "tree.h"
     #include "astn.h"
     #include "atnn.h"
+    #include "data.h"
 
     using namespace std;
     using namespace freeling;
@@ -139,7 +140,7 @@ program 	: { driver.clear(); }
 						else { // token == L"GLOBAL"
 							for (int i = 0; i < t->num_children(); ++i) {
 								tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-								driver.addMainElement(((tr->begin())->astn)->getValueWstring(), tr, true);
+								driver.addMainElement(((tr->begin())->astn)->getValueWstring(), new Data());
 							}
 						}
 					}

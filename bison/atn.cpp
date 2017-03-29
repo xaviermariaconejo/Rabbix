@@ -6,6 +6,8 @@ using namespace std;
 using namespace ATN;
 
 Atn::Atn() :
+    m_input(),
+    m_output(),
     m_func(),
     m_global(),
     m_stack(),
@@ -36,6 +38,8 @@ void Atn::clear() {
     m_row = 1;
     m_func.clear();
     m_global.clear();
+    m_input.clear();
+    m_output.clear();
     while (!m_stack.empty()) {
         m_stack.top().clear();
         m_stack.pop();
@@ -46,8 +50,8 @@ string Atn::str() {
     stringstream s;
     s << "Interpreter: Printing all elements" << endl << endl;
     for (auto it = m_global.begin(); it != m_global.end(); ++it) {
-        freeling::tree<ATNN::Node>* t = it->second;
-        s << ASTPrint(*t, "").str() << endl;
+        wstring ws = it->first;
+        s << "GLOBAL ID: " << converter.to_bytes(ws) << endl << endl;
     }
     for (auto it = m_func.begin(); it != m_func.end(); ++it) {
          freeling::tree<ATNN::Node>* t = it->second;
@@ -148,14 +152,14 @@ stringstream Atn::ASTPrint(const freeling::tree<ATNN::Node>& t, string tab) {
     return s;
 }
 
-void Atn::addMainElement(wstring ws, freeling::tree<ATNN::Node>* t, bool global)
+void Atn::addMainElement(wstring ws, freeling::tree<ATNN::Node>* t)
 {
-    if (!global) {
-        m_func[ws] = t;        
-    }
-    else {
-        m_global[ws] = t;        
-    }
+    m_func[ws] = t;
+}
+
+void Atn::addMainElement(wstring ws, Data* d)
+{
+    m_global[ws] = d;
 }
 
 void Atn::increaseLocation(unsigned int loc) {
@@ -192,16 +196,21 @@ void Atn::executeAtn(wstring atnname) {
     map<wstring, tree<ATNN::Node>*> states = atn.getStates();
     map<wstring, tree<ATNN::Node>*> finals = atn.getFinals();
     vector<wstring> list = atn.getInitials();
+    map<wstring, Data*> globals(m_global);
     for (int i = 0; i < list.size(); ++i) {
         wstring stateInit = list[i];
         auto st = states.find(stateInit);
         if (st == states.end()) throw runtime_error(" state " + converter.to_bytes(stateInit) + " not declared");
         auto stateFinal = finals.find(stateInit);
-        executeState(*(st->second), 0, 0, m_global, finals, states, stateFinal != finals.end());
+        map<wstring, Data*> globalsCopy(globals);
+        executeState(*(st->second), 0, 0, globalsCopy, finals, states, stateFinal != finals.end());
     }
 }
 
-void Atn::executeState(const tree<ATNN::Node>& state, int i, int j, const map<wstring, tree<ATNN::Node>*>& global, const map<wstring, tree<ATNN::Node>*>& finalStates, const map<wstring, tree<ATNN::Node>*>& states, bool final) {
+void Atn::executeState(const tree<ATNN::Node>& state, int i, int j, map<wstring, Data*>& global, const map<wstring, tree<ATNN::Node>*>& finalStates, const map<wstring, tree<ATNN::Node>*>& states, bool final) {
+    // Update m_global
+    m_global = global;
+
     // Execute the list of instructions of the state, if
     // the state is final, push the result in the vector 
     // of results
@@ -231,7 +240,8 @@ void Atn::executeState(const tree<ATNN::Node>& state, int i, int j, const map<ws
             auto st = states.find(nextState);
             if (st == states.end()) throw runtime_error(" state " + converter.to_bytes(nextState) + " not declared");
             auto stateFinal = finalStates.find(nextState);
-            executeState(*(st->second), i, j + 1, global, finalStates, states, stateFinal != finalStates.end());
+            map<wstring, Data*> globalsCopy(m_global);
+            executeState(*(st->second), i, j + 1, globalsCopy, finalStates, states, stateFinal != finalStates.end());
         }
     }
 }
@@ -308,7 +318,10 @@ Data* Atn::executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& 
         else if (!final && nameValue == L"@") throw runtime_error("The variable @ it's reserved for the output in final states");
         Data* value2 = evaluateExpression(it.nth_child(1));
         if (value1.getToken() == L"TOKEN ID") {
-            if (m_stack.top().find(nameValue) != m_stack.top().end()) {
+            if (m_global.find(nameValue) != m_global.end()) {
+                m_global[nameValue]->setDataValue(value2);
+            }
+            else if (m_stack.top().find(nameValue) != m_stack.top().end()) {
                 m_stack.top()[nameValue]->setDataValue(value2);
             }
             else {
@@ -317,7 +330,8 @@ Data* Atn::executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& 
         }
         else if (value1.getToken() == L"ARRAY ACCES") {
             Data* d = nullptr;
-            if (m_stack.top().find(nameValue) != m_stack.top().end()) d = m_stack.top()[nameValue];
+            if (m_global.find(nameValue) != m_global.end()) d = m_global[nameValue];
+            else if (m_stack.top().find(nameValue) != m_stack.top().end()) d = m_stack.top()[nameValue];
             if (d == nullptr || d->isArray() || d->isMap()) {
                 Data* pos = evaluateExpression(it.nth_child(1));
                 if (pos->isInt() && (d == nullptr || d->isArray())) {
@@ -336,6 +350,7 @@ Data* Atn::executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& 
         }
         else if (value1.getToken() == L"OBJECT ACCES") {
             Data* d = nullptr;
+            if (m_global.find(nameValue) != m_global.end()) d = m_global[nameValue];
             if (m_stack.top().find(nameValue) != m_stack.top().end()) d = m_stack.top()[nameValue];
             else d = new Data(map<wstring, Data*>());
             if (d->isMap()) {
@@ -499,7 +514,17 @@ Data* Atn::evaluateExpression(const freeling::tree<ATNN::Node>::const_iterator& 
     }
     // Array & Object operators
     else if (type == L"LOCAL FUNCTION") {
-        Data* d = m_stack.top()[((it.nth_child(0))->astn)->getValueWstring()];
+        Data* d = nullptr;
+        ASTN* nodeId = (it.nth_child(0))->astn;
+        wstring nameId = nodeId->getValueWstring();
+        if (m_global.find(nameId) != m_global.end()) {
+            d = m_global[nameId];
+        }
+        else if (m_stack.top().find(nameId) != m_stack.top().end()) {
+            d = m_stack.top()[nameId];
+        }
+        else throw runtime_error("The variable " + converter.to_bytes(nameId) + " can't be void");
+
         if (node.getValueWstring() == L"size") {
             if (d->isArray()) value1 = new Data(d->getSizeArray());
             else if (d->isMap()) value1 = new Data(d->getSizeMap());
@@ -635,14 +660,29 @@ Data* Atn::getAccesData(const ASTN& t, const freeling::tree<ATNN::Node>::const_i
             if (input < 0) throw runtime_error("The variable $ it's reserved for the input");
             v = new Data(m_input[input]);
         }
-        else v = m_stack.top()[t.getValueWstring()];
+        else {
+            if (m_global.find(t.getValueWstring()) != m_global.end()) {
+                v = m_global[t.getValueWstring()];
+            }
+            else if (m_stack.top().find(t.getValueWstring()) != m_stack.top().end()) {
+                v = m_stack.top()[t.getValueWstring()];
+            }
+            else throw runtime_error("Can not find the variable " + converter.to_bytes(t.getValueWstring()));
+        }
     }
     else if (t.getToken() == L"ARRAY ACCES") {
         ASTN id = *((it.nth_child(0))->astn);
+        Data* d = nullptr;
         if (id.getValueWstring() == L"$") {
             throw runtime_error("The variable $ it's reserved for the input");
         }
-        Data* d = m_stack.top()[id.getValueWstring()];
+        if (m_global.find(id.getValueWstring()) != m_global.end()) {
+            d = m_global[id.getValueWstring()];
+        }
+        else if (m_stack.top().find(id.getValueWstring()) != m_stack.top().end()) {
+            d = m_stack.top()[id.getValueWstring()];
+        }
+        else throw runtime_error("Can not find the variable " + converter.to_bytes(t.getValueWstring()));
         if (d->isArray() || d->isMap()) {
             Data* pos = evaluateExpression(it.nth_child(1));
             if (pos->isInt()) {
@@ -669,10 +709,17 @@ Data* Atn::getAccesData(const ASTN& t, const freeling::tree<ATNN::Node>::const_i
     }
     else if (t.getToken() == L"OBJECT ACCES") {
         ASTN id = *((it.nth_child(0))->astn);
+        Data* d = nullptr;
         if (id.getValueWstring() == L"$") {
             throw runtime_error("The variable $ it's reserved for the input");
         }
-        Data* d = m_stack.top()[id.getValueWstring()];
+        if (m_global.find(id.getValueWstring()) != m_global.end()) {
+            d = m_global[id.getValueWstring()];
+        }
+        else if (m_stack.top().find(id.getValueWstring()) != m_stack.top().end()) {
+            d = m_stack.top()[id.getValueWstring()];
+        }
+        else throw runtime_error("Can not find the variable " + converter.to_bytes(t.getValueWstring()));
         if (d->isMap()) {
             Data* pos = evaluateExpression(it.nth_child(1));
             if (pos->isWstring()) {

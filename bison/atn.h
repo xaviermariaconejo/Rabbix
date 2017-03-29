@@ -89,7 +89,8 @@ namespace ATN {
             /**
              * Used internally by Parser to insert AST nodes.            
              */
-            void addMainElement(std::wstring ws, freeling::tree<ATNN::Node>* t, bool global = false);
+            void addMainElement(std::wstring ws, freeling::tree<ATNN::Node>* t);
+            void addMainElement(std::wstring ws, Data* d);
 
             /**
              * Used internally by Scanner YY_USER_ACTION to update location indicator.
@@ -124,7 +125,7 @@ namespace ATN {
             /**
              * Executes a state of an atn.
              */
-            void executeState(const freeling::tree<ATNN::Node>& state, int i, int j, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& global, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& finalStates, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& states, bool final);
+            void executeState(const freeling::tree<ATNN::Node>& state, int i, int j, std::map<std::wstring, Data*>& global, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& finalStates, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& states, bool final);
 
             /**
              * Executes a function.
@@ -194,7 +195,7 @@ namespace ATN {
             unsigned int m_row, m_column, m_location;               // Used by scanner
 
             std::map<std::wstring, freeling::tree<ATNN::Node>* > m_func;   // Map of functions & ATN's
-            std::map<std::wstring, freeling::tree<ATNN::Node>* > m_global; // Map of global variables
+            std::map<std::wstring, Data* > m_global; // Map of global variables
             std::stack< std::map<std::wstring, Data*> > m_stack;     // Stack of variables for the actual State
 
             std::vector<std::wstring> m_input;                       // Vector of inputs
