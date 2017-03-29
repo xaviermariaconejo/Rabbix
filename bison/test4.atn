@@ -1,5 +1,10 @@
+global abc, def, hjki;
+
+global XYZ;
+
 function func(a, b, c) {
-	print << a << " " << c << endl;
+	print << "XYZ: " << ++XYZ << endl;
+	print << "FUNC: " << a << " " << c << endl;
 	return b;
 }
 
@@ -10,6 +15,7 @@ ATN main {
 	state a {
 		action {
 			print << "State: a" << endl;
+			XYZ = 0;
 		}
 
 		transition {
@@ -30,6 +36,7 @@ ATN main {
 	STATE c {
 		ACTION {
 			print << "State: c" << endl;
+			@ = "CORRECT";
 		}
 		TRANSITION { }
 	}

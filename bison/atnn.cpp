@@ -55,18 +55,7 @@ void ATNN::setInitials(const std::vector<std::wstring>& v) {
 }
 
 void ATNN::setFinals(const std::map<std::wstring, freeling::tree<ATNN::Node>*>& m) {
-	std::cout << "SET FINALS" << std::endl;
-	// if (m == nullptr) std::cout << "LOLASO" << std::endl;
-	std::cout << "LOLASO " << m.size() << std::endl;
-
-		for (auto it = m.begin(); it != m.end(); ++it) {
-			std::wstring ws = it->first;
-			std::cout << std::string(ws.begin(), ws.end()) << std::endl;
-		}
-	std::cout << "LOLASO DOBLE" << std::endl;
 	m_finals = m;
-	std::cout << "SET FINALS" << std::endl;
-
 }
 
 void ATNN::setStates(const std::map<std::wstring, freeling::tree<ATNN::Node>*>& m) {

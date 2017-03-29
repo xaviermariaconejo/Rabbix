@@ -31,6 +31,15 @@ namespace ATN {
     class Atn
     {
         public:
+            struct Output
+            {
+                Output() { }
+                Output(int i, int j, std::wstring ws): init(i), final(j), info(ws) { }
+                int init;
+                int final;
+                std::wstring info;
+            };
+
             Atn();
             ~Atn();
 
@@ -43,7 +52,7 @@ namespace ATN {
             /**
              * Run interpreter. Results are stored inside.
              */
-            void run(const std::vector<std::wstring>& in);
+            std::vector<Output> run(const std::vector<std::wstring>& in);
 
             /**
              * Clear AST
@@ -60,6 +69,7 @@ namespace ATN {
              * It will also reset AST.
              */
             void switchInputStream(std::istream *is);
+            void file(wstring ws);
 
             /**
              * This is needed so that Scanner and Parser can call some
@@ -69,16 +79,6 @@ namespace ATN {
             friend class Scanner;
             
         private:
-            struct Output
-            {
-                Output() { }
-                Output(int i, int j, std::wstring ws): init(i), final(j), info(ws) { }
-                int init;
-                int final;
-                std::wstring info;
-            };
-
-
             /**
              * Used internally to print the AST.
              */

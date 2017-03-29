@@ -1,5 +1,6 @@
 #include "atn.h"
 
+#include <fstream>
 #include <sstream>
 
 using namespace std;
@@ -28,9 +29,10 @@ int Atn::parse() {
     return m_parser.parse();
 }
 
-void Atn::run(const vector<wstring>& in) {
+vector<Atn::Output> Atn::run(const vector<wstring>& in) {
     m_input = in;
     executeAtn(L"main");
+    return m_output;
 }
 
 void Atn::clear() {
@@ -58,6 +60,19 @@ string Atn::str() {
          s << ASTPrint(*t, "").str() << endl;
     }
     return s.str();
+}
+
+void Atn::file(wstring ws) {
+    filebuf fb;
+    if (fb.open (converter.to_bytes(ws), std::ios::in))
+    {
+        std::istream is(&fb);
+        while (is) {
+            std::cout << char(is.get());
+        }
+        std::cout << std::endl << std::endl;
+        fb.close();
+    }    
 }
 
 void Atn::switchInputStream(istream *is) {
@@ -208,13 +223,15 @@ void Atn::executeAtn(wstring atnname) {
 }
 
 void Atn::executeState(const tree<ATNN::Node>& state, int i, int j, map<wstring, Data*>& global, const map<wstring, tree<ATNN::Node>*>& finalStates, const map<wstring, tree<ATNN::Node>*>& states, bool final) {
-    // Update m_global
+    // Update m_global & prepare m_stack
     m_global = global;
+    m_stack.push( map<wstring, Data*>() );
+
 
     // Execute the list of instructions of the state, if
     // the state is final, push the result in the vector 
     // of results
-    if (final) {   
+    if (final) {
         executeListInstructions(((state.nth_child(0)).nth_child(0)).begin(), true);
         if (m_stack.top().find(L"@") != m_stack.top().end()) {
             Data* value = m_stack.top()[L"@"];
@@ -229,10 +246,13 @@ void Atn::executeState(const tree<ATNN::Node>& state, int i, int j, map<wstring,
     }
     else executeListInstructions(((state.nth_child(0)).nth_child(0)).begin());
 
+    // Erase the lvl of the stack for this state
+    m_stack.pop();
+
     // Check all the transitions and go to
     // the state if the result is true
     auto list = state.nth_child(1);
-    for (int k = 0; i < list.num_children(); ++k) {
+    for (int k = 0; k < list.num_children(); ++k) {
         Data* value = evaluateExpression((list.nth_child(k)).nth_child(1), j);
         checkBool(value);
         if (value->getBoolValue()) {
