@@ -5,8 +5,12 @@ using namespace ATN;
 using namespace std;
 
 int main(int argc, char **argv) {
-    Atn i;
+    Atn<vector<string>, string> i;
 	// i.file(L"test4.atn");
+
+	// V es un container (vector, list,...) que conte elements de tipus T
+	// V ha de ser indexable per posicio mb un operador []
+ 	// Atn<V, T>
 
     int res = i.parse();
     cout << "Parse complete. Result = " << res << endl << endl;

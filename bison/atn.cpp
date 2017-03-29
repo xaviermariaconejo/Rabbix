@@ -488,6 +488,7 @@ Data* Atn::executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& 
     else assert(false);
 }
 
+template<sentence,word>
 Data* Atn::evaluateExpression(const freeling::tree<ATNN::Node>::const_iterator& it, int input) {
     Data *value1, *value2;
     ASTN node = *(it->astn);
@@ -565,7 +566,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ATNN::Node>::const_iterator& 
         }
         else if (input && node.getValueWstring() == L"lema") {
 
-        }
+        }//form tag
         else throw runtime_error("function " + converter.to_bytes(node.getValueWstring()) + " indefined");
         //TODO
     }
