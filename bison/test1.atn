@@ -1,0 +1,47 @@
+global a;
+
+global B;
+
+global x, y, z;
+
+function func (){
+	b = (2 + 3)*(4 - 5);
+	print ("test b", endl);
+	print (b, endl);
+	print (10%2, endl);
+	print ("nice test", endl);
+	return "wow";
+}
+
+function main(){
+	a = 2*3 + 4/6;
+	/* this is 
+	a comment */
+	print (func(), endl);
+	print (a, endl);
+	++a;
+	print (a, endl);
+	--a;
+	print (a, endl);
+	return;
+}
+
+ATN mai {
+	initial states: a;
+	final states: b;
+
+	state a {
+		action {
+			a = "some stuff";
+			func();
+		}
+		transition { }
+	}
+
+	state b {
+		ACTION {
+			a = 2;
+		}
+		transition { }
+	}
+}

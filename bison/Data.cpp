@@ -1,4 +1,4 @@
-#include "Data.h"
+#include "data.h"
 
 #include <assert.h>
 
@@ -54,7 +54,7 @@ Data::Data(wstring ws) :
 	value_map()
 { }
 
-Data::Data(const vector<Data>& v) :
+Data::Data(const vector<Data*>& v) :
 	type(ARRAY),
 	value_bool(),
 	value_int(),
@@ -64,7 +64,7 @@ Data::Data(const vector<Data>& v) :
 	value_map()
 { }
 
-Data::Data(const map<wstring, Data>& m) :
+Data::Data(const map<wstring, Data*>& m) :
 	type(MAP),
 	value_bool(),
 	value_int(),
@@ -74,18 +74,18 @@ Data::Data(const map<wstring, Data>& m) :
 	value_map(m)
 { }
 
-Data::Data(const Data& data) {
+Data::Data(const Data* data) {
 	clone(data);
 }
 
-void Data::clone(const Data& n) {
-	type = n.type;
-	value_bool = n.value_bool;
-	value_int = n.value_int;
-	value_double = n.value_double;
-	value_wstring = wstring(n.value_wstring);
-	value_array = vector<Data>(n.value_array);
-	value_map = map<wstring, Data>(n.value_map);
+void Data::clone(const Data* n) {
+	type = n->type;
+	value_bool = n->value_bool;
+	value_int = n->value_int;
+	value_double = n->value_double;
+	value_wstring = wstring(n->value_wstring);
+	value_array = vector<Data*>(n->value_array);
+	value_map = map<wstring, Data*>(n->value_map);
 }
 
 Data::~Data() {
@@ -102,31 +102,23 @@ void Data::clear() {
 	value_map.clear();
 }
 
-Data& Data::operator=(const Data& data) {
-	if (this != &data) {
-      clear();
-      clone(data);
-    }
-    return (*this);
-}
-
 Data::DataType Data::getType() const {
 	return type;
 }
 
-bool Data::equals(const Data& d) const {
+bool Data::equals(const Data* d) const {
 	assert(type != MAP);
-	if (type != d.type) return false;
+	if (type != d->type) return false;
 	else {
 		switch (type) {
-			case BOOL: return value_bool == d.value_bool;
-			case INT: return value_int == d.value_int;
-			case DOUBLE: return value_double == d.value_double;
-			case WSTRING: return value_wstring == d.value_wstring;
-			case ARRAY: if (value_array.size() != d.value_array.size()) return false;
+			case BOOL: return value_bool == d->value_bool;
+			case INT: return value_int == d->value_int;
+			case DOUBLE: return value_double == d->value_double;
+			case WSTRING: return value_wstring == d->value_wstring;
+			case ARRAY: if (value_array.size() != d->value_array.size()) return false;
 						else {
 							for (int i = 0; i < value_array.size(); ++i) {
-								if (!value_array[i].equals(d.value_array[i])) return false;
+								if (!value_array[i]->equals(d->value_array[i])) return false;
 								else return true;
 							}
 						}
@@ -179,25 +171,45 @@ double Data::getDoubleValue() const {
     return value_double;
 }
 
-std::wstring Data::getWstringValue() const {
+wstring Data::getWstringValue() const {
 	assert(type == WSTRING);
     return value_wstring;
 }
 
-const std::vector<Data>& Data::getArrayValue() const {
+wstring Data::getWstringValue(int i) const {
+	assert(type == WSTRING);
+	return value_wstring.substr(i, i + 1);;
+}
+
+int Data::getSizeWstring() const {
+	assert(type == WSTRING);
+	return value_wstring.size();
+}
+
+vector<Data*>& Data::getArrayValue() {
 	assert(type == ARRAY);
     return value_array;
 }
 
-const Data& Data::getArrayValue(int i) const {
+const vector<Data*>& Data::getArrayValue() const {
+	assert(type == ARRAY);
+    return value_array;
+}
+
+Data* Data::getArrayValue(int i) {
 	assert(type == ARRAY);
 	return value_array[i];
 }
 
-int Data::getIndexOfArray(const Data& d) const {
+const Data* Data::getArrayValue(int i) const {
+	assert(type == ARRAY);
+	return value_array[i];
+}
+
+int Data::getIndexOfArray(const Data* d) const {
 	assert(type == ARRAY);
 	for (int i = 0; i < value_array.size(); ++i) {
-		if (value_array[i].equals(d)) return i;
+		if (value_array[i]->equals(d)) return i;
 	}
 	return -1;
 }
@@ -207,17 +219,31 @@ int Data::getSizeArray() const {
 	return value_array.size();
 }
 
-const std::map<std::wstring, Data>& Data::getMapValue() const {
+map<wstring, Data*>& Data::getMapValue() {
 	assert(type == MAP);
 	return value_map;
 }
 
-const Data& Data::getMapValue(std::wstring ws) {
+const map<wstring, Data*>& Data::getMapValue() const {
+	assert(type == MAP);
+	return value_map;
+}
+
+Data* Data::getMapValue(wstring ws) {
 	assert(type == MAP);
 	return value_map[ws];
 }
 
-const Data& Data::getMapValue(int i) const {
+Data* Data::getMapValue(int i) {
+	assert(type == MAP);
+	int j = 0;
+	for (auto& x: value_map) {
+		if (i == j++) return x.second;
+	}
+	throw runtime_error("out of index");
+}
+
+const Data* Data::getMapValue(int i) const {
 	assert(type == MAP);
 	int j = 0;
 	for (auto& x: value_map) {
@@ -229,6 +255,10 @@ const Data& Data::getMapValue(int i) const {
 int Data::getSizeMap() const {
 	assert(type == MAP);
 	return value_map.size();
+}
+
+void Data::setDataValue(const Data* d) {
+	clone(d);
 }
 
 void Data::setBoolValue(bool b) {
@@ -251,17 +281,22 @@ void Data::setWstringValue(wstring ws) {
 	value_wstring = ws;
 }
 
-void Data::setArrayValue(const vector<Data>& v) {
+void Data::setArrayValue(const vector<Data*>& v) {
 	type = ARRAY;
 	value_array = v;
 }
 
-void Data::addArrayValue(const Data& d) {
+void Data::addArrayValue(Data* d) {
 	assert(type == ARRAY);
 	value_array.push_back(d);
 }
 
-void Data::addArrayValue(int i, const Data& d) {
+void Data::addArrayValue(int i, Data* d) {
+	assert(type == ARRAY);
+	value_array[i] = d;
+}
+
+void Data::insertArrayValue(int i, Data* d) {
 	assert(type == ARRAY);
 	value_array.insert(value_array.begin() + i, d);
 }
@@ -271,17 +306,17 @@ void Data::deleteArrayValue(int i) {
 	value_array.erase(value_array.begin() + i);
 }
 
-void Data::setMapValue(const map<wstring, Data>& m) {
+void Data::setMapValue(const map<wstring, Data*>& m) {
 	type = MAP;
 	value_map = m;
 }
 
-void Data::addMapValue(std::wstring ws, const Data& d) {
+void Data::addMapValue(wstring ws, Data* d) {
 	assert(type == MAP);
 	value_map[ws] = d;
 }
 
-void Data::deleteMapValue(std::wstring ws) {
+void Data::deleteMapValue(wstring ws) {
 	assert(type == MAP);
 	value_map.erase(ws);
 }
@@ -297,45 +332,79 @@ wstring Data::toString() const {
 	}
 }
 
-void Data::evaluateArithmetic (wstring op, const Data& d) {
-	assert((type == INT || type == DOUBLE) && (d.type == INT || d.type == DOUBLE));
-	if (type == INT && d.type == INT) {
-		if (op == L"PLUS") value_int += d.value_int;
-		else if (op == L"MINUS") value_int -= d.value_int;
-		else if (op == L"MUL") value_int *= d.value_int;
-		else if (op == L"DIV") { checkDivZero(d); value_int /= d.value_int; }
-		else if (op == L"MOD") { checkDivZero(d); value_int %= d.value_int; }
+void Data::evaluateArithmetic (wstring op, Data* d) {
+	assert((type == INT || type == DOUBLE) && (d->type == INT || d->type == DOUBLE));
+	if (type == INT && d->type == INT) {
+		if (op == L"PLUS") value_int += d->value_int;
+		else if (op == L"MINUS") value_int -= d->value_int;
+		else if (op == L"MULT") value_int *= d->value_int;
+		else if (op == L"DIV") { checkDivZero(d); value_int /= d->value_int; }
+		else if (op == L"MOD") { checkDivZero(d); value_int %= d->value_int; }
 		else assert(false);
 	}
 	else { //type == DOUBLE || d.type == DOUBLE
 		assert(op != L"MOD");
-		if (op == L"PLUS") value_double += d.value_double;
-		else if (op == L"MINUS") value_double -= d.value_double;
-		else if (op == L"MUL") value_double *= d.value_double;
-		else if (op == L"DIV") { checkDivZero(d); value_double /= d.value_double; }
+
+		if (type == INT) value_double = value_int;
+		if (d->type == INT) d->value_double = d->value_int;
+		type = DOUBLE;
+
+		if (op == L"PLUS") value_double += d->value_double;
+		else if (op == L"MINUS") value_double -= d->value_double;
+		else if (op == L"MULT") value_double *= d->value_double;
+		else if (op == L"DIV") { checkDivZero(d); value_double /= d->value_double; }
 		else assert(false);
 	}
 }
 
-void Data::checkDivZero(const Data& d) {
-	assert(type == INT || type == DOUBLE);
-	if (type == INT) {
-		if (d.value_int == 0) throw runtime_error("division by zero");
+void Data::checkDivZero(const Data* d) {
+	assert(d->type == INT || d->type == DOUBLE);
+	if (d->type == INT) {
+		if (d->value_int == 0) throw runtime_error("division by zero");
 	}
 	else { // type == DOUBLE
-		if (d.value_double == 0) throw runtime_error("division by zero");
+		if (d->value_double == 0) throw runtime_error("division by zero");
 	}
 }
 
-Data Data::evaluateRelational (wstring op, Data d) {
-	assert(type != VOID && type != ARRAY && type != MAP && type == d.type);
-	wstring d1 = (*this).toString();
-	wstring d2 = d.toString();
-	if (op == L"EQUAL") return Data(d1 == d2);
-	else if (op == L"NOT_EQUAL") return Data(d1 != d2);
-	else if (op == L"LT") return Data(d1 < d2);
-	else if (op == L"LE") return Data(d1 <= d2);
-	else if (op == L"GT") return Data(d1 > d2);
-	else if (op == L"GE") return Data(d1 >= d2);
-	else assert(false);
+Data* Data::evaluateRelational (wstring op, Data* d) {
+	assert(type != VOID && type != ARRAY && type != MAP);
+	double d1, d2;
+	if (type == INT) {
+		d1 = value_int;
+	}
+	else if (type == DOUBLE) {
+		d1 = value_double;
+	}
+	if (d->type == INT) {
+		d2 = d->value_int;
+	}
+	else if (d->type == DOUBLE) {
+		d2 = d->value_double;
+	}
+
+	if ((type == INT || type == DOUBLE) && (d->type == INT || d->type == DOUBLE)) {
+		if (op == L"EQUAL") return new Data(d1 == d2);
+		else if (op == L"NOT_EQUAL") return new Data(d1 != d2);
+		else if (op == L"LT") return new Data(d1 < d2);
+		else if (op == L"LE") return new Data(d1 <= d2);
+		else if (op == L"GT") return new Data(d1 > d2);
+		else if (op == L"GE") return new Data(d1 >= d2);
+		else assert(false);
+	}
+	else {
+		wstring ws1, ws2;
+		if (type == WSTRING) ws1 = value_wstring;
+		else ws1 = to_wstring(d1);
+		if (d->type == WSTRING) ws2 = value_wstring;
+		else ws2 = to_wstring(d2);
+
+		if (op == L"EQUAL") return new Data(ws1 == ws2);
+		else if (op == L"NOT_EQUAL") return new Data(ws1 != ws2);
+		else if (op == L"LT") return new Data(ws1 < ws2);
+		else if (op == L"LE") return new Data(ws1 <= ws2);
+		else if (op == L"GT") return new Data(ws1 > ws2);
+		else if (op == L"GE") return new Data(ws1 >= ws2);
+		else assert(false);
+	}
 }

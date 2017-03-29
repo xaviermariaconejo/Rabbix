@@ -27,14 +27,11 @@ namespace ATN {
 			Data(int n);
 			Data(double x);
 			Data(std::wstring ws);
-			Data(const std::vector<Data>& v);
-			Data(const std::map<std::wstring, Data>& m);
+			Data(const std::vector<Data*>& v);
+			Data(const std::map<std::wstring, Data*>& m);
 
 			// copy
-			Data(const Data& data);
-
-			// assignment
-			Data& operator=(const Data& data);
+			Data(const Data* data);
 
 			// destructor
 			~Data();
@@ -46,7 +43,7 @@ namespace ATN {
     		DataType getType() const;
 
     		// Indicates if are equals
-    		bool equals(const Data& d) const;
+    		bool equals(const Data* d) const;
 
 		    // Indicates whether the data is void
 			bool isVoid() const;
@@ -94,20 +91,32 @@ namespace ATN {
 			std::wstring getWstringValue() const;
 
 			/**
+			 * Gets the value of a character of the wstring.
+			 */
+			std::wstring getWstringValue(int i) const;
+
+			/**
+			 * Gets the size of the wstring value.
+			 */
+			int getSizeWstring() const;
+
+			/**
 		     * Gets the value of an array data. The method asserts that
 		     * the data is an array.
 		     */
-			const std::vector<Data>& getArrayValue() const;
+			std::vector<Data*>& getArrayValue();
+			const std::vector<Data*>& getArrayValue() const;
 
 			/**
 			 * Gets the value of an element of the array data.
 			 */
-			const Data& getArrayValue(int i) const;
+			Data* getArrayValue(int i);
+			const Data* getArrayValue(int i) const;
 
 			/**
 			 * Gets the index of the value of an element of the array data.
 			 */
-			int getIndexOfArray(const Data& d) const;
+			int getIndexOfArray(const Data* d) const;
 
 			/**
 			 * Gets the size of the array
@@ -118,18 +127,23 @@ namespace ATN {
 		     * Gets the value of an map data. The method asserts that
 		     * the data is an map.
 		     */
-			const std::map<std::wstring, Data>& getMapValue() const;
+			std::map<std::wstring, Data*>& getMapValue();
+			const std::map<std::wstring, Data*>& getMapValue() const;
 
 			/**
 			 * Gets the value of an element of the map data.
 			 */
-			const Data& getMapValue(std::wstring ws);
-			const Data& getMapValue(int i) const;
+			Data* getMapValue(std::wstring ws);
+			Data* getMapValue(int i);
+			const Data* getMapValue(int i) const;
 
 			/**
 			 * Gets the size of the map
 			 */
 			int getSizeMap() const;
+
+		    // Defines a Data value for the data
+			void setDataValue(const Data* d);
 
 		    // Defines a bool value for the data
 			void setBoolValue(bool b);
@@ -144,22 +158,25 @@ namespace ATN {
 			void setWstringValue(std::wstring ws);
 
 		    // Defines a array value for the data
-			void setArrayValue(const std::vector<Data>& v);
+			void setArrayValue(const std::vector<Data*>& v);
 
 			// Set an element at the last position of the array
-			void addArrayValue(const Data& d);
+			void addArrayValue(Data* d);
+
+			// Set an element at the position p of the array, i < v.size()
+			void addArrayValue(int i, Data* d);
 
 			// Set an element at the position p of the array
-			void addArrayValue(int i, const Data& d);
+			void insertArrayValue(int i, Data* d);
 
 			// Delete an element at the position i of the map
 			void deleteArrayValue(int i);
 
 		    // Defines a map value for the data
-			void setMapValue(const std::map<std::wstring, Data>& m);
+			void setMapValue(const std::map<std::wstring, Data*>& m);
 
 			// Set an element of the map
-			void addMapValue(std::wstring ws, const Data& d);
+			void addMapValue(std::wstring ws, Data* d);
 
 			// Delete an element at position i of the array
 			void deleteMapValue(std::wstring ws);
@@ -168,20 +185,20 @@ namespace ATN {
 			std::wstring toString() const;
 
 		    // Evaluation of arithmetic expressions. Returning the result on the same data.
-		    void evaluateArithmetic (std::wstring op, const Data& d);
+		    void evaluateArithmetic (std::wstring op, Data* d);
 
 	        // Evaluation of expressions with relational operators.
-			Data evaluateRelational (std::wstring op, Data d);
+			Data* evaluateRelational (std::wstring op, Data* d);
 
 		private:
 		    /**
 		     * Checks for zero (for division). It raises an exception in case
 		     * the value is zero.
 		     */
-			void checkDivZero(const Data& d);
+			void checkDivZero(const Data* d);
 
 	    	// auxiliary to copy, assignment, and destructor
-      		void clone(const Data& data);
+      		void clone(const Data* data);
 
 			// Type of the data
 			DataType type;
@@ -191,8 +208,8 @@ namespace ATN {
 			int value_int;
 			double value_double;
 			std::wstring value_wstring;
-			std::vector<Data> value_array;
-			std::map<std::wstring, Data> value_map;
+			std::vector<Data*> value_array;
+			std::map<std::wstring, Data*> value_map;
     };
 }
 

@@ -1,14 +1,17 @@
-#ifndef INTERPRETER_H
-#define INTERPRETER_H
+#ifndef ATN_H
+#define ATN_H
 
+#include <locale>
+#include <codecvt>
 #include <stack>
 #include <list>
 #include <map>
 
-#include "Data.h"
+#include "data.h"
 
 #include "tree.h"
-#include "ASTN.h"
+#include "astn.h"
+#include "atnn.h"
 
 #include "scanner.h"
 #include "parser.hpp"
@@ -17,7 +20,7 @@ namespace ATN {
 
     // forward declare our simplistic AST node class so we
     // can declare container for it without the header
-    //class ASTN;
+    // class ASTN;
 
     /**
      * This class is the interface for our scanner/lexer. The end user
@@ -25,11 +28,11 @@ namespace ATN {
      * parsed AST. Both parser and lexer have access to it via internal 
      * references.
      */
-    class Interpreter
+    class Atn
     {
         public:
-            Interpreter();
-            ~Interpreter();
+            Atn();
+            ~Atn();
 
             /**
              * Run parser. Results are stored inside.
@@ -40,7 +43,7 @@ namespace ATN {
             /**
              * Run interpreter. Results are stored inside.
              */
-            void run();
+            void run(const std::vector<std::wstring>& in);
 
             /**
              * Clear AST
@@ -50,7 +53,7 @@ namespace ATN {
             /**
              * Print AST, element could be the id of a global variable, function or ATN
              */
-            std::string str() const;
+            std::string str();
             
             /**
              * Switch scanner input stream. Default is standard input (std::cin).
@@ -66,15 +69,27 @@ namespace ATN {
             friend class Scanner;
             
         private:
+            struct Output
+            {
+                Output() { }
+                Output(int i, int j, std::wstring ws): init(i), final(j), info(ws) { }
+                int init;
+                int final;
+                std::wstring info;
+            };
+
+
             /**
              * Used internally to print the AST.
              */
-            std::stringstream ASTPrint(const freeling::tree<ASTN>& t, string tab) const;
+            std::stringstream ASTPrint(const freeling::tree<ATNN::Node>& t, string tab);
+            std::stringstream ASTPrint(const freeling::tree<ASTN>& t, string tab);
+
 
             /**
              * Used internally by Parser to insert AST nodes.            
              */
-            void addMainElement(std::wstring ws, const freeling::tree<ASTN>& t);
+            void addMainElement(std::wstring ws, freeling::tree<ATNN::Node>* t, bool global = false);
 
             /**
              * Used internally by Scanner YY_USER_ACTION to update location indicator.
@@ -102,14 +117,19 @@ namespace ATN {
             unsigned int row() const;
 
             /**
-             * Executes a atn.
+             * Executes an atn.
              */
             void executeAtn(std::wstring atnName);
 
             /**
+             * Executes a state of an atn.
+             */
+            void executeState(const freeling::tree<ATNN::Node>& state, int i, int j, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& global, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& finalStates, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& states, bool final);
+
+            /**
              * Executes a function.
              */
-            Data executeFunction(std::wstring funcname, const freeling::tree<ASTN>& args);
+            Data* executeFunction(std::wstring funcname, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
 
             /**
              * Gathers the list of arguments of a function call. It also checks
@@ -117,25 +137,31 @@ namespace ATN {
              * it checks that the number of parameters is the same and that no
              * expressions are passed as parametres by reference.
              */
-            list<Data> listArguments(const freeling::tree<ASTN>& AstF, const freeling::tree<ASTN>& args);
+            map<wstring, Data*> listArguments(const freeling::tree<ATNN::Node>::const_iterator& AstF, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
 
             /**
              * Executes a block of instructions. The block is terminated
              * as soon as an instruction returns a non-null result.
              * Non-null results are only returned by "return" statements.
              */
-            Data executeListInstructions(const freeling::tree<ASTN>& t);
+            Data* executeListInstructions(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
 
             /**
              * Executes an instruction. 
              * Non-null results are only returned by "return" statements.
              */
-            Data executeInstruction(const freeling::tree<ASTN>& t);
+            Data* executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
 
             /**
              * Evaluates the expression represented in the AST t.
              */
-            Data evaluateExpression(const freeling::tree<ASTN>& t);
+            Data* evaluateExpression(const freeling::tree<ATNN::Node>::const_iterator& t, int input = -1);
+
+            /**
+             * Get de pointer Data of the TOKEN ID, ARRAY ACCES or OBJECT ACCES
+             * used in assigmanets, double arithmetic and andpersand
+             */
+            Data* getAccesData(const ASTN& t, const freeling::tree<ATNN::Node>::const_iterator& it, int input = -2);
             
             /**
              * Evaluation of Boolean expressions. This function implements
@@ -143,25 +169,38 @@ namespace ATN {
              * and is only evaluated if the value of the expression cannot be
              * determined by the first operand.
              */
-            Data& evaluateBool(std::wstring type, Data& v, const freeling::tree<ASTN>& t);
+            Data* evaluateBool(std::wstring type, Data* v, const freeling::tree<ATNN::Node>::const_iterator& t);
             
             /**
              * Checks that the data is Boolean and raises an exception if it is not.
              */
-            void checkBool(const Data& b);
+            void checkBool(const Data* b);
     
            /**
             * Checks that the data is integer or double and raises an exception if it is not.
             */
-            void checkNumeric(const Data& b);
+            void checkNumeric(const Data* b);
+
+            /**
+             * Prepare the string to print, check special characters
+             */
+            void printOutput(std::string s) const;
 
             
+            wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;   // Converer wstring - string
+
             Scanner m_scanner;
             Parser m_parser;
             unsigned int m_row, m_column, m_location;               // Used by scanner
 
-            std::map<std::wstring, freeling::tree<ASTN> > m_map;    // Map of global variables & functions & ATN's
-            std::stack< std::map<std::wstring, Data> > m_stack;     // Stack of variables for each State
+            std::map<std::wstring, freeling::tree<ATNN::Node>* > m_func;   // Map of functions & ATN's
+            std::map<std::wstring, freeling::tree<ATNN::Node>* > m_global; // Map of global variables
+            std::stack< std::map<std::wstring, Data*> > m_stack;     // Stack of variables for the actual State
+
+            std::vector<std::wstring> m_input;                       // Vector of inputs
+            std::vector<Output> m_output;                            // Vector of outputs
+
+
 
             /* Idea */
             // Number of (global variables & functions & ATN's) of all the program, to differentiate from the local global varaibles & fucntions of the actual ATN
@@ -169,4 +208,4 @@ namespace ATN {
     
 }
 
-#endif // INTERPRETER_H
+#endif // ATN_H

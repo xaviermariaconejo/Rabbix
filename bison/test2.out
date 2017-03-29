@@ -1,0 +1,249 @@
+Parse complete. Result = 0
+
+Interpreter: Printing all elements
+
+FUNCTION: func
+     |
+     |--> PARAM LIST
+     |
+     '--> BODY
+          |
+          '--> RETURN
+               |
+               '--> TOKEN STRING: "Func called"
+
+ATN: main
+     |
+     |--> GLOBAL LIST
+     |
+     |--> INITIALS
+     |     |
+     |     '--> ID LIST
+     |          |
+     |          '--> ID: a
+     |
+     '--> FINALS
+          |
+          '--> ID LIST
+               |
+               '--> ID: b
+
+FUNCTION: settings
+     |
+     |--> PARAM LIST
+     |
+     '--> BODY
+          |
+          |--> ASSIGMENT
+          |     |
+          |     |--> TOKEN ID: a
+          |     |
+          |     '--> TOKEN INT: 3
+          |
+          |--> ASSIGMENT
+          |     |
+          |     |--> TOKEN ID: b
+          |     |
+          |     '--> TOKEN BOOL: FALSE
+          |
+          |--> IF ELSE IF ELSE
+          |     |
+          |     |--> AND
+          |     |     |
+          |     |     |--> LT
+          |     |     |     |
+          |     |     |     |--> TOKEN ID: a
+          |     |     |     |
+          |     |     |     '--> TOKEN INT: 5
+          |     |     |
+          |     |     '--> NOT
+          |     |          |
+          |     |          '--> TOKEN ID: b
+          |     |
+          |     |--> BODY
+          |     |     |
+          |     |     '--> PRINT
+          |     |          |
+          |     |          '--> TOKEN STRING: "FIRST IF"
+          |     |
+          |     |--> ELSE IF
+          |     |
+          |     '--> ELSE
+          |
+          |--> IF ELSE IF ELSE
+          |     |
+          |     |--> AND
+          |     |     |
+          |     |     |--> LT
+          |     |     |     |
+          |     |     |     |--> TOKEN ID: a
+          |     |     |     |
+          |     |     |     '--> TOKEN INT: 5
+          |     |     |
+          |     |     '--> TOKEN ID: b
+          |     |
+          |     |--> BODY
+          |     |     |
+          |     |     '--> PRINT
+          |     |          |
+          |     |          '--> TOKEN STRING: "ERROR"
+          |     |
+          |     |--> ELSE IF
+          |     |
+          |     '--> ELSE
+          |          |
+          |          '--> BODY
+          |               |
+          |               |--> PRINT
+          |               |     |
+          |               |     '--> TOKEN STRING: "FIRST ELSE"
+          |               |
+          |               '--> PRINT
+          |                    |
+          |                    '--> FUNCALL: func
+          |                         |
+          |                         '--> EXPR LIST
+          |
+          |--> IF ELSE IF ELSE
+          |     |
+          |     |--> AND
+          |     |     |
+          |     |     |--> LT
+          |     |     |     |
+          |     |     |     |--> TOKEN ID: a
+          |     |     |     |
+          |     |     |     '--> TOKEN INT: 5
+          |     |     |
+          |     |     '--> TOKEN ID: b
+          |     |
+          |     |--> BODY
+          |     |     |
+          |     |     '--> PRINT
+          |     |          |
+          |     |          '--> TOKEN STRING: "ERROR"
+          |     |
+          |     |--> ELSE IF
+          |     |     |
+          |     |     |--> NOT
+          |     |     |     |
+          |     |     |     '--> TOKEN ID: b
+          |     |     |
+          |     |     '--> BODY
+          |     |          |
+          |     |          '--> PRINT
+          |     |               |
+          |     |               '--> TOKEN STRING: "FIRST ELSE IF"
+          |     |
+          |     '--> ELSE
+          |
+          |--> IF ELSE IF ELSE
+          |     |
+          |     |--> AND
+          |     |     |
+          |     |     |--> LT
+          |     |     |     |
+          |     |     |     |--> TOKEN ID: a
+          |     |     |     |
+          |     |     |     '--> TOKEN INT: 5
+          |     |     |
+          |     |     '--> TOKEN ID: b
+          |     |
+          |     |--> BODY
+          |     |     |
+          |     |     '--> PRINT
+          |     |          |
+          |     |          '--> TOKEN STRING: "ERROR"
+          |     |
+          |     |--> ELSE IF
+          |     |     |
+          |     |     |--> TOKEN ID: b
+          |     |     |
+          |     |     |--> BODY
+          |     |     |     |
+          |     |     |     '--> PRINT
+          |     |     |          |
+          |     |     |          '--> TOKEN STRING: "ERROR"
+          |     |     |
+          |     |     |--> LE
+          |     |     |     |
+          |     |     |     |--> TOKEN ID: a
+          |     |     |     |
+          |     |     |     '--> TOKEN INT: 5
+          |     |     |
+          |     |     '--> BODY
+          |     |          |
+          |     |          '--> PRINT
+          |     |               |
+          |     |               '--> TOKEN STRING: "FIRST ELSE IF ELSE"
+          |     |
+          |     '--> ELSE
+          |          |
+          |          '--> BODY
+          |               |
+          |               '--> PRINT
+          |                    |
+          |                    '--> TOKEN STRING: "ERROR"
+          |
+          '--> IF ELSE IF ELSE
+               |
+               |--> AND
+               |     |
+               |     |--> LE
+               |     |     |
+               |     |     |--> TOKEN ID: a
+               |     |     |
+               |     |     '--> TOKEN INT: 5
+               |     |
+               |     '--> TOKEN ID: b
+               |
+               |--> BODY
+               |     |
+               |     '--> PRINT
+               |          |
+               |          '--> TOKEN STRING: "ERROR"
+               |
+               |--> ELSE IF
+               |     |
+               |     |--> TOKEN ID: b
+               |     |
+               |     |--> BODY
+               |     |     |
+               |     |     '--> PRINT
+               |     |          |
+               |     |          '--> TOKEN STRING: "ERROR"
+               |     |
+               |     |--> GE
+               |     |     |
+               |     |     |--> TOKEN ID: a
+               |     |     |
+               |     |     '--> TOKEN INT: 5
+               |     |
+               |     '--> BODY
+               |          |
+               |          '--> PRINT
+               |               |
+               |               '--> TOKEN STRING: "ERROR"
+               |
+               '--> ELSE
+                    |
+                    '--> BODY
+                         |
+                         |--> PRINT
+                         |     |
+                         |     '--> TOKEN STRING: "SECOND ELSE IF ELSE"
+                         |
+                         |--> RETURN
+                         |
+                         '--> PRINT
+                              |
+                              '--> FUNCALL: func
+                                   |
+                                   '--> EXPR LIST
+
+
+"FIRST IF"
+"FIRST ELSE"
+"Func called"
+"FIRST ELSE IF"
+"FIRST ELSE IF ELSE"
+"SECOND ELSE IF ELSE"

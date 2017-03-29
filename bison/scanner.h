@@ -19,16 +19,16 @@
 namespace ATN {
 
 	// Forward declare interpreter to avoid include. Header is added in implementation file.
-	class Interpreter; 
+	class Atn; 
 	    
 	class Scanner : public yyFlexLexer {
 		public:
-	        Scanner(Interpreter &driver) : m_driver(driver) {}
+	        Scanner(Atn &driver) : m_driver(driver) {}
 			virtual ~Scanner() {}
 			virtual ATN::Parser::symbol_type get_next_token();
 		        
 		private:
-		    Interpreter &m_driver;
+		    Atn &m_driver;
 	};
 
 }
