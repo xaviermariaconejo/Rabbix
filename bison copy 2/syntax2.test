@@ -1,0 +1,35 @@
+function main(){
+	for (i = 0; i < 10; i = i + 1) {
+		a = 2*3;
+		if (true){
+			return false;
+		}
+		else {
+			return 4 + 5/4;
+		}
+	}
+
+	while (a > 5) {
+		b = 3+3;
+		f(2+2, a());
+	}
+}
+
+ATN main {
+	global aux1;
+	global aux2;
+	initial states: a, b;
+	final states: x;
+
+	state a {
+		action {
+			a = "some stuff";
+			f();
+		}
+
+		transition {
+			to B if (2+2 > 5);
+			to a if (true);
+		}
+	}
+}

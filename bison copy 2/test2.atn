@@ -1,0 +1,74 @@
+function func (){
+	return "Func called";
+}
+
+function main(){
+	a = 3;
+	b = false;
+	if (a < 5 && !b) {
+		print ("FIRST IF", endl);
+	}
+	
+	if (a < 5 and b) {
+		print ("ERROR", endl);
+	}
+	else {
+		print ("FIRST ELSE", endl);
+		print (func(), endl);
+	}
+
+	if (a < 5 AND b) {
+		print ("ERROR", endl);
+	}
+	else if (!b) {
+		print ("FIRST ELSE IF", endl);
+	}
+
+	if (a < 5 AND b) {
+		print ("ERROR", endl);
+	}
+	else if (b) {
+		print ("ERROR", endl);
+	}
+	else if (a <= 5) {
+		print ("FIRST ELSE IF ELSE", endl);
+	}
+	else {
+		print ("ERROR", endl);
+	}
+	
+	if (a <= 5 AND b) {
+		print ("ERROR", endl);
+	}
+	else if (b) {
+		print ("ERROR", endl);
+	}
+	else if (a >= 5) {
+		print ("ERROR", endl);
+	}
+	else {
+		print ("SECOND ELSE IF ELSE", endl);
+		return;
+		print (func(), endl);
+	}
+}
+
+ATN mai {
+	initial states: a;
+	final states: b;
+
+	state a {
+		action {
+			a = "some stuff";
+			func();
+		}
+		transition { }
+	}
+
+	state b {
+		ACTION {
+			a = 2;
+		}
+		transition { }
+	}
+}

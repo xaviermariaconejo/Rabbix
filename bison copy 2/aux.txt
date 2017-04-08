@@ -1,0 +1,171 @@
+Parse complete. Result = 0
+
+Interpreter: Printing all elements
+
+GLOBAL ID: B
+
+GLOBAL ID: a
+
+GLOBAL ID: x
+
+GLOBAL ID: y
+
+GLOBAL ID: z
+
+FUNCTION: func
+     |
+     |--> PARAM LIST
+     |
+     '--> BODY
+          |
+          |--> ASSIGMENT
+          |     |
+          |     |--> TOKEN ID: b
+          |     |
+          |     '--> MULT
+          |          |
+          |          |--> PLUS
+          |          |     |
+          |          |     |--> TOKEN INT: 2
+          |          |     |
+          |          |     '--> TOKEN INT: 3
+          |          |
+          |          '--> MINUS
+          |               |
+          |               |--> TOKEN INT: 4
+          |               |
+          |               '--> TOKEN INT: 5
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> TOKEN STRING: test b
+          |          |
+          |          '--> ENDL
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> TOKEN ID: b
+          |          |
+          |          '--> ENDL
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> MOD
+          |          |     |
+          |          |     |--> TOKEN INT: 10
+          |          |     |
+          |          |     '--> TOKEN INT: 2
+          |          |
+          |          '--> ENDL
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> TOKEN STRING: nice test
+          |          |
+          |          '--> ENDL
+          |
+          '--> RETURN
+               |
+               '--> TOKEN STRING: wow
+
+ATN: mai
+     |
+     |--> GLOBAL LIST
+     |
+     |--> INITIALS
+     |     |
+     |     '--> ID LIST
+     |          |
+     |          '--> ID: a
+     |
+     '--> FINALS
+          |
+          '--> ID LIST
+               |
+               '--> ID: b
+
+FUNCTION: main
+     |
+     |--> PARAM LIST
+     |
+     '--> BODY
+          |
+          |--> ASSIGMENT
+          |     |
+          |     |--> TOKEN ID: a
+          |     |
+          |     '--> PLUS
+          |          |
+          |          |--> MULT
+          |          |     |
+          |          |     |--> TOKEN INT: 2
+          |          |     |
+          |          |     '--> TOKEN INT: 3
+          |          |
+          |          '--> DIV
+          |               |
+          |               |--> TOKEN INT: 4
+          |               |
+          |               '--> TOKEN INT: 6
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> FUNCALL: func
+          |          |     |
+          |          |     '--> EXPR LIST
+          |          |
+          |          '--> ENDL
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> TOKEN ID: a
+          |          |
+          |          '--> ENDL
+          |
+          |--> DPLUS
+          |     |
+          |     '--> TOKEN ID: a
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> TOKEN ID: a
+          |          |
+          |          '--> ENDL
+          |
+          |--> DMINUS
+          |     |
+          |     '--> TOKEN ID: a
+          |
+          |--> PRINT
+          |     |
+          |     '--> PRINT LIST
+          |          |
+          |          |--> TOKEN ID: a
+          |          |
+          |          '--> ENDL
+          |
+          '--> RETURN
+
+
+test b
+-5
+0
+nice test
+wow
+6
+7
+6

@@ -1,0 +1,43 @@
+global abc, def, hjki;
+
+global XYZ;
+
+function func(a, b, c) {
+	print << "XYZ: " << ++XYZ << endl;
+	print << "FUNC: " << a << " " << c << endl;
+	return b;
+}
+
+ATN main {
+	initial states: a;
+	final states: c;
+
+	state a {
+		action {
+			print << "State: a" << endl;
+			XYZ = 0;
+		}
+
+		transition {
+			to b if (func($, true, "a"));
+			to c if (func($, false, "a"));
+		}
+	}
+
+	state b {
+		ACTION {
+			print << "State: b" << endl;
+		}
+		transition {
+			to c if (func($, true, "b"));
+		}
+	}
+
+	STATE c {
+		ACTION {
+			print << "State: c" << endl;
+			@ = "CORRECT";
+		}
+		TRANSITION { }
+	}
+}
