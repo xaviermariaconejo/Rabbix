@@ -43,6 +43,18 @@ namespace ATN {
             Atn();
             Atn(std::wstring name);
             ~Atn();
+
+            /**
+             * Run parser. Results are stored inside.
+             * \returns 0 on success, 1 on failure
+             */
+            int parse();
+            
+            /**
+             * Switch scanner input stream. Default is standard input (std::cin).
+             * It will also reset AST.
+             */
+            void switchInputStream(std::istream *is);
             
             /**
              * Run interpreter. Results are stored inside.
@@ -67,19 +79,6 @@ namespace ATN {
             friend class Scanner;
             
         private:
-            /**
-             * Run parser. Results are stored inside.
-             * \returns 0 on success, 1 on failure
-             */
-            int parse();
-
-            
-            /**
-             * Switch scanner input stream. Default is standard input (std::cin).
-             * It will also reset AST.
-             */
-            void switchInputStream(std::istream *is);
-
             /**
              * Used internally to print the AST.
              */
@@ -187,10 +186,12 @@ namespace ATN {
 
             Scanner m_scanner;
             Parser m_parser;
-            unsigned int m_row, m_column, m_location;               // Used by scanner
+            unsigned int m_row, m_column, m_location;                               // Used by scanner
 
-            std::map<std::wstring, freeling::tree<ATNN::Node>* > m_func;   // Map of functions & ATN's
-            std::map<std::wstring, Data* > m_global;                 // Map of global variables
+            std::map<std::wstring, freeling::tree<ASTN*>* > m_func;                 // Map of functions
+            std::map<std::wstring, ATNN* > m_atn;                                   // Map of ATN's
+            std::map<std::wstring, Data* > m_global;                                // Map of global variables
+
             std::stack< std::map<std::wstring, Data*> > m_stack;     // Stack of variables for the actual State
 
             std::vector<std::wstring> m_input;                       // Vector of inputs

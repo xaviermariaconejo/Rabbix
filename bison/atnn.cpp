@@ -1,4 +1,4 @@
-#include "ATNN.h"
+#include "atnn.h"
 
 using namespace ATN;
 

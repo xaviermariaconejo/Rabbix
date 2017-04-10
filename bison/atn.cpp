@@ -31,27 +31,15 @@ Atn::Atn(wstring name) :
     m_row(1),
     m_location(0)
 {
-
-cout << "YEAH" << endl;
-
     ifstream file( converter.to_bytes(name) );
     if (file)
     {
-        cout << "INSIDE IF" << endl;
         stringstream buffer;
-
         buffer << file.rdbuf();
-
         file.close();
-
         switchInputStream(&buffer);
-
-        // operations on the buffer...
     }
-cout << "OUT IF" << endl;
     parse();
-
-    cout << "ALL CORRECT" << endl;
 }
 
 vector<Atn::Output> Atn::run(const vector<wstring>& in) {

@@ -111,13 +111,15 @@
 %left	NEG POS NOT
 %right	POW
 
-%type < freeling::tree<ATN::ATNN::Node>* > mainElement global func param_list param block_instructions ids init;
-%type < freeling::tree<ATN::ATNN::Node>* > atn id_list state transition_list funcall element_to_print print_list;
-%type < freeling::tree<ATN::ATNN::Node>* > instruction_list instruction assign ite_stmt else_if else object_list;
-%type < freeling::tree<ATN::ATNN::Node>* > while_stmt for_stmt incremental dowhile_stmt return_stmt print_stmt expr states;
-%type < freeling::tree<ATN::ATNN::Node>* > atom arithmetical_expr boolean_expr expr_list local_functions double_arithmetic;
-%type < std::map<std::wstring, freeling::tree<ATN::ATNN::Node>*> > finals;
-%type < std::vector<std::wstring> > initials;
+%type < freeling::tree<ATN::ASTN*>* > mainElement func param_list param block_instructions ids init;
+%type < freeling::tree<ATN::ASTN*>* > id_list state transition_list funcall element_to_print print_list;
+%type < freeling::tree<ATN::ASTN*>* > instruction_list instruction assign ite_stmt else_if else object_list;
+%type < freeling::tree<ATN::ASTN*>* > while_stmt for_stmt incremental dowhile_stmt return_stmt print_stmt expr;
+%type < freeling::tree<ATN::ASTN*>* > atom arithmetical_expr boolean_expr expr_list local_functions double_arithmetic;
+%type < ATN::ATNN* > atn;
+%type < std::vector<std::wstring> > initials finals;
+%type < std::map<std::wstring, freeling::tree<ATN::ASTN*>*> > states;
+%type < std::map<std::wstring, ATN::Data* > > global;
 
 %start program
 
@@ -125,12 +127,13 @@
 %%
 
 
-// A program is a list of main elements (ATN's, states, functions, global variables)
+// A program is a list of main elements (ATN's, functions, global variables)
 program 	: { driver.clear(); }
 			| program mainElement
 				{
-					tree<ATNN::Node>* t = $2;
-					tree<ATNN::Node>::const_iterator it = t->begin();
+					/* TODO eliminar todo esto
+					tree<ASTN*>* t = $2;
+					tree<ASTN*>::const_iterator it = t->begin();
 					
 					if (it->astn != nullptr) {
 						wstring token = (it->astn)->getToken();
@@ -139,7 +142,7 @@ program 	: { driver.clear(); }
 						}
 						else { // token == L"GLOBAL"
 							for (int i = 0; i < t->num_children(); ++i) {
-								tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
+								tree<ASTN*>* tr = new tree<ASTN*>(it.nth_child_ref(i));
 								driver.addMainElement(((tr->begin())->astn)->getValueWstring(), new Data());
 							}
 						}
@@ -147,44 +150,68 @@ program 	: { driver.clear(); }
 					else { // it->atn != nullptr
 						driver.addMainElement((it->atn)->getName(), t);
 					}
+					*/
 				}
 		;
 
 // A main element is an element as the type of: ATN, Function, Global variables
-mainElement	: global SEMICOLON 	{ $$ = $1; }
-			| func   			{ $$ = $1; }
-			| atn 	 			{ $$ = $1; }
+mainElement	: global SEMICOLON 
+				{
+					driver.m_global.insert($1.begin(), $1.end());
+				}
+			| func
+	   			{
+	   				tree<ASTN*>* t = $1;
+	   				tree<ASTN*>::const_iterator it = t->begin();
+	   				driver.m_func[(*it)->getValueWstring()] = t;
+	   			}
+			| atn
+	 			{
+	 				ATNN* t = $1;
+	   				driver.m_atn[t->getName()] = t;
+	 			}
 			;
 
 // A global variable
-global 	: GLOBAL ID 
+global 	: GLOBAL ID
 			{
-				ATNN::Node astn1(new ASTN(L"GLOBAL"));
-				tree<ATNN::Node>* t = new tree<ATNN::Node>(astn1);
-				ATNN::Node astn2(new ASTN(L"GLOBAL ID", converter.from_bytes($2)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
+				map<wstring, Data* > m;
+				m[converter.from_bytes($2)] = new Data();
+				$$ = m;
+
+				/* TODO
+				ASTN* astn1(new ASTN(L"GLOBAL"));
+				tree<ASTN*>* t = new tree<ASTN*>(astn1);
+				ASTN* astn2(new ASTN(L"GLOBAL ID", converter.from_bytes($2)));
+				tree<ASTN*>* id = new tree<ASTN*>(astn2);
 
 				t->add_child(*id);
 				$$ = t;
+				*/
 			}
 		| global COMMA ID
 			{
-				tree<ATNN::Node>* t = $1;
-				ATNN::Node astn(new ASTN(L"GLOBAL ID", converter.from_bytes($3)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn);
+				map<wstring, Data* > m = $1;
+				m[converter.from_bytes($3)] = new Data();
+				$$ = m;
+
+				/* TODO
+				tree<ASTN*>* t = $1;
+				ASTN* astn(new ASTN(L"GLOBAL ID", converter.from_bytes($3)));
+				tree<ASTN*>* id = new tree<ASTN*>(astn);
 
 				t->add_child(*id);
 				$$ = t;
+				*/
 			}
 		;
 
 // A function has a name, a list of parameters and a block of instructions	
 func	: FUNC ID OPARENTHESIS param_list CPARENTHESIS block_instructions
 			{
-				ATNN::Node astn(new ASTN(L"FUNCTION", converter.from_bytes($2)));
-				tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-				const tree<ATNN::Node>* params = $4;
-				const tree<ATNN::Node>* body = $6;
+				tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"FUNCTION", converter.from_bytes($2)));
+				const tree<ASTN*>* params = $4;
+				const tree<ASTN*>* body = $6;
 
 				t->add_child(*params);
 				t->add_child(*body);
@@ -195,22 +222,20 @@ func	: FUNC ID OPARENTHESIS param_list CPARENTHESIS block_instructions
 // The list of parameters grouped in a subtree (it can be empty)
 param_list	: // nothing
 				{
-					ATNN::Node astn(new ASTN(L"PARAM LIST"));
-					$$ = new tree<ATNN::Node>(astn);
+					$$ = new tree<ASTN*>(new ASTN(L"PARAM LIST"));
 				}
 			| param
 				{
-					ATNN::Node astn(new ASTN(L"PARAM LIST"));
-					tree<ATNN::Node>* params = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* p = $1;
+					tree<ASTN*>* params = new tree<ASTN*>(new ASTN(L"PARAM LIST"));
+					tree<ASTN*>* p = $1;
 
 					params->add_child(*p);
 					$$ = params;
 				}
 			| param_list COMMA param
 				{
-					tree<ATNN::Node>* params = $1;
-					tree<ATNN::Node>* p = $3;
+					tree<ASTN*>* params = $1;
+					tree<ASTN*>* p = $3;
 
 					params->add_child(*p);
 					$$ = params;
@@ -218,145 +243,95 @@ param_list	: // nothing
 			;
 
 // Parameters with & as prefix are passed by reference
-// Only one ATNN::node with the name of the parameter is created
+// Only one ASTN* with the name of the parameter is created
 param 	: ANDPERSAND ID
 			{
-				ATNN::Node astn(new ASTN(L"ANDPERSAND", converter.from_bytes($2)));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"ANDPERSAND", converter.from_bytes($2)));
 			}
 		| ID
 			{
-				ATNN::Node astn(new ASTN(L"VALUE", converter.from_bytes($1)));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"VALUE", converter.from_bytes($1)));
 			}
 		;
 
 // ATN
 atn 	: ATN ID OBRACER initials finals states CBRACER
 			{
-				ATNN::Node atnn(new ATNN(converter.from_bytes($2)));
+				ATNN* atnn = new ATNN(converter.from_bytes($2));
 
 				vector<wstring> init = $4;
-				map<wstring, tree<ATNN::Node>*> fin = $5;
-				map<wstring, tree<ATNN::Node>*> sts;
+				vector<wstring> fin = $5;
+				map<wstring, tree<ASTN*>*> sts = $6;
 				
-				tree<ATNN::Node>* t = $6;
-				tree<ATNN::Node>::const_iterator it = t->begin();
-				for (int i = 0; i < t->num_children(); ++i) {
-					tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-					wstring id = ((tr->begin())->astn)->getValueWstring();
-					sts[id] = tr;
-				}
-
-				atnn.atn->setInitials(init);
-				atnn.atn->setFinals(fin);
-				atnn.atn->setStates(sts);
-				$$ = new tree<ATNN::Node>(atnn);
+				atnn->setInitials(init);
+				atnn->setFinals(fin);
+				atnn->setStates(sts);
+				$$ = atnn;
 			}
 		| ATN ID OBRACER initials states finals CBRACER
 			{
-				ATNN::Node atnn(new ATNN(converter.from_bytes($2)));
+				ATNN* atnn = new ATNN(converter.from_bytes($2));
 
 				vector<wstring> init = $4;
-				map<wstring, tree<ATNN::Node>*> fin = $6;
-				map<wstring, tree<ATNN::Node>*> sts;
+				vector<wstring> fin = $6;
+				map<wstring, tree<ASTN*>*> sts = $5;
 				
-				tree<ATNN::Node>* t = $5;
-				tree<ATNN::Node>::const_iterator it = t->begin();
-				for (int i = 0; i < t->num_children(); ++i) {
-					tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-					wstring id = ((tr->begin())->astn)->getValueWstring();
-					sts[id] = tr;
-				}
-
-				atnn.atn->setInitials(init);
-				atnn.atn->setFinals(fin);
-				atnn.atn->setStates(sts);
-				$$ = new tree<ATNN::Node>(atnn);
+				atnn->setInitials(init);
+				atnn->setFinals(fin);
+				atnn->setStates(sts);
+				$$ = atnn;
 			}
 		| ATN ID OBRACER finals initials states CBRACER
 			{
-				ATNN::Node atnn(new ATNN(converter.from_bytes($2)));
+				ATNN* atnn = new ATNN(converter.from_bytes($2));
 
 				vector<wstring> init = $5;
-				map<wstring, tree<ATNN::Node>*> fin = $4;
-				map<wstring, tree<ATNN::Node>*> sts;
+				vector<wstring> fin = $4;
+				map<wstring, tree<ASTN*>*> sts = $6;
 				
-				tree<ATNN::Node>* t = $6;
-				tree<ATNN::Node>::const_iterator it = t->begin();
-				for (int i = 0; i < t->num_children(); ++i) {
-					tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-					wstring id = ((tr->begin())->astn)->getValueWstring();
-					sts[id] = tr;
-				}
-
-				atnn.atn->setInitials(init);
-				atnn.atn->setFinals(fin);
-				atnn.atn->setStates(sts);
-				$$ = new tree<ATNN::Node>(atnn);
+				atnn->setInitials(init);
+				atnn->setFinals(fin);
+				atnn->setStates(sts);
+				$$ = atnn;
 			}
 		| ATN ID OBRACER finals states initials CBRACER
 			{
-				ATNN::Node atnn(new ATNN(converter.from_bytes($2)));
+				ATNN* atnn = new ATNN(converter.from_bytes($2));
 
 				vector<wstring> init = $6;
-				map<wstring, tree<ATNN::Node>*> fin = $4;
-				map<wstring, tree<ATNN::Node>*> sts;
+				vector<wstring> fin = $4;
+				map<wstring, tree<ASTN*>*> sts = $5;
 				
-				tree<ATNN::Node>* t = $5;
-				tree<ATNN::Node>::const_iterator it = t->begin();
-				for (int i = 0; i < t->num_children(); ++i) {
-					tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-					wstring id = ((tr->begin())->astn)->getValueWstring();
-					sts[id] = tr;
-				}
-
-				atnn.atn->setInitials(init);
-				atnn.atn->setFinals(fin);
-				atnn.atn->setStates(sts);
-				$$ = new tree<ATNN::Node>(atnn);
+				atnn->setInitials(init);
+				atnn->setFinals(fin);
+				atnn->setStates(sts);
+				$$ = atnn;
 			}
 		| ATN ID OBRACER states initials finals CBRACER
 			{
-				ATNN::Node atnn(new ATNN(converter.from_bytes($2)));
+				ATNN* atnn = new ATNN(converter.from_bytes($2));
 
 				vector<wstring> init = $5;
-				map<wstring, tree<ATNN::Node>*> fin = $6;
-				map<wstring, tree<ATNN::Node>*> sts;
+				vector<wstring> fin = $6;
+				map<wstring, tree<ASTN*>*> sts = $4;
 				
-				tree<ATNN::Node>* t = $4;
-				tree<ATNN::Node>::const_iterator it = t->begin();
-				for (int i = 0; i < t->num_children(); ++i) {
-					tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-					wstring id = ((tr->begin())->astn)->getValueWstring();
-					sts[id] = tr;
-				}
-
-				atnn.atn->setInitials(init);
-				atnn.atn->setFinals(fin);
-				atnn.atn->setStates(sts);
-				$$ = new tree<ATNN::Node>(atnn);
+				atnn->setInitials(init);
+				atnn->setFinals(fin);
+				atnn->setStates(sts);
+				$$ = atnn;
 			}
 		| ATN ID OBRACER states finals initials CBRACER
 			{
-				ATNN::Node atnn(new ATNN(converter.from_bytes($2)));
+				ATNN* atnn = new ATNN(converter.from_bytes($2));
 
 				vector<wstring> init = $6;
-				map<wstring, tree<ATNN::Node>*> fin = $5;
-				map<wstring, tree<ATNN::Node>*> sts;
+				vector<wstring> fin = $5;
+				map<wstring, tree<ASTN*>*> sts = $4;
 
-				tree<ATNN::Node>* t = $4;
-				tree<ATNN::Node>::const_iterator it = t->begin();
-				for (int i = 0; i < t->num_children(); ++i) {
-					tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-					wstring id = ((tr->begin())->astn)->getValueWstring();
-					sts[id] = tr;
-				}
-
-				atnn.atn->setInitials(init);
-				atnn.atn->setFinals(fin);
-				atnn.atn->setStates(sts);
-				$$ = new tree<ATNN::Node>(atnn);
+				atnn->setInitials(init);
+				atnn->setFinals(fin);
+				atnn->setStates(sts);
+				$$ = atnn;
 			}
 		;
 
@@ -364,11 +339,11 @@ atn 	: ATN ID OBRACER initials finals states CBRACER
 initials 	: INITIAL COLON id_list SEMICOLON
 				{
 					vector<wstring> v;
-					tree<ATNN::Node>* t = $3;
-					tree<ATNN::Node>::const_iterator it = t->begin();
+					tree<ASTN*>* t = $3;
+					tree<ASTN*>::const_iterator it = t->begin();
 					for (int i = 0; i < t->num_children(); ++i) {
-						tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-						wstring id = ((tr->begin())->astn)->getValueWstring();
+						tree<ASTN*>* tr = new tree<ASTN*>(it.nth_child_ref(i));
+						wstring id = (*(tr->begin()))->getValueWstring();
 						v.push_back(id);
 					}
 					$$ = v;
@@ -378,34 +353,31 @@ initials 	: INITIAL COLON id_list SEMICOLON
 // The finals states of an ATN
 finals 	: FINAL COLON id_list SEMICOLON
 				{
-					map<wstring, tree<ATNN::Node>*> m;
-					tree<ATNN::Node>* t = $3;
-					tree<ATNN::Node>::const_iterator it = t->begin();
+					vector<wstring> v;
+					tree<ASTN*>* t = $3;
+					tree<ASTN*>::const_iterator it = t->begin();
 					for (int i = 0; i < t->num_children(); ++i) {
-						tree<ATNN::Node>* tr = new tree<ATNN::Node>(it.nth_child_ref(i));
-						wstring id = ((tr->begin())->astn)->getValueWstring();
-						m[id] = tr;
+						tree<ASTN*>* tr = new tree<ASTN*>(it.nth_child_ref(i));
+						wstring id = (*(tr->begin()))->getValueWstring();
+						v.push_back(id);
 					}
-					$$ = m;
+					$$ = v;
 				}
 			;
 
 // List of ids
 id_list	: ID
 			{
-				ATNN::Node astn1(new ASTN(L"ID LIST"));
-				tree<ATNN::Node>* t = new tree<ATNN::Node>(astn1);
-				ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($1)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
+				tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"ID LIST"));
+				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
 
 				t->add_child(*id);
 				$$ = t;
 			}
 		| id_list COMMA ID
 			{
-				tree<ATNN::Node>* t = $1;
-				ATNN::Node astn(new ASTN(L"ID", converter.from_bytes($3)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn);
+				tree<ASTN*>* t = $1;
+				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($3)));
 
 				t->add_child(*id);
 				$$ = t;
@@ -415,31 +387,30 @@ id_list	: ID
 // States of the ATN
 states 	: state
 			{
-				ATNN::Node astn(new ASTN(L"STATES"));
-				tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-				t->add_child(*$1);
-				$$ = t;
+				map<wstring, tree<ASTN*>*> m;
+				tree<ASTN*>* t = $1;
+				m[(*(t->begin()))->getValueWstring()] = t;
+				$$ = m;
 			}
 		| states state
 			{
-				tree<ATNN::Node>* t = $1;
-				t->add_child(*$2);
-				$$ = $1;
+				map<wstring, tree<ASTN*>*> m = $1;
+				tree<ASTN*>* t = $2;
+				m[(*(t->begin()))->getValueWstring()] = t;
+				$$ = m;
 			}
 		;
 
 // Single state
 state 	: STATE ID OBRACER ACTION block_instructions TRANSITION OBRACER transition_list CBRACER CBRACER
 			{
-				ATNN::Node astn1(new ASTN(L"STATE", converter.from_bytes($2)));
-				tree<ATNN::Node>* t = new tree<ATNN::Node>(astn1);
+				tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"STATE", converter.from_bytes($2)));
 				
-				ATNN::Node astn2(new ASTN(L"ACTION"));
-				tree<ATNN::Node>* act = new tree<ATNN::Node>(astn2);
-				tree<ATNN::Node>* instr = $5;
+				tree<ASTN*>* act = new tree<ASTN*>(new ASTN(L"ACTION"));
+				tree<ASTN*>* instr = $5;
 				act->add_child(*instr);
 
-				tree<ATNN::Node>* trans = $8;
+				tree<ASTN*>* trans = $8;
 
 				t->add_child(*act);
 				t->add_child(*trans);
@@ -447,15 +418,13 @@ state 	: STATE ID OBRACER ACTION block_instructions TRANSITION OBRACER transitio
 			}
 		| STATE ID OBRACER TRANSITION OBRACER transition_list CBRACER ACTION block_instructions CBRACER
 			{
-				ATNN::Node astn1(new ASTN(L"STATE", converter.from_bytes($2)));
-				tree<ATNN::Node>* t = new tree<ATNN::Node>(astn1);
+				tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"STATE", converter.from_bytes($2)));
 				
-				ATNN::Node astn2(new ASTN(L"ACTION"));
-				tree<ATNN::Node>* act = new tree<ATNN::Node>(astn2);
-				tree<ATNN::Node>* instr = $9;
+				tree<ASTN*>* act = new tree<ASTN*>(new ASTN(L"ACTION"));
+				tree<ASTN*>* instr = $9;
 				act->add_child(*instr);
 
-				tree<ATNN::Node>* trans = $6;
+				tree<ASTN*>* trans = $6;
 
 				t->add_child(*act);
 				t->add_child(*trans);
@@ -466,18 +435,14 @@ state 	: STATE ID OBRACER ACTION block_instructions TRANSITION OBRACER transitio
 // List of transitions
 transition_list 	: // nothing
 						{
-							ATNN::Node astn(new ASTN(L"TRANSITION"));
-							$$ = new tree<ATNN::Node>(astn);
+							$$ = new tree<ASTN*>(new ASTN(L"TRANSITION"));
 						}
 					| TO ID IF OPARENTHESIS expr CPARENTHESIS SEMICOLON
 						{
-							ATNN::Node astn1(new ASTN(L"TRANSITION"));
-							tree<ATNN::Node>* t = new tree<ATNN::Node>(astn1);
-							ATNN::Node astn2(new ASTN(L"TO"));
-							tree<ATNN::Node>* trans = new tree<ATNN::Node>(astn2);
-							ATNN::Node astn3(new ASTN(L"ID", converter.from_bytes($2)));
-							tree<ATNN::Node>* id = new tree<ATNN::Node>(astn3);
-							tree<ATNN::Node>* cond = $5;
+							tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"TRANSITION"));
+							tree<ASTN*>* trans = new tree<ASTN*>(new ASTN(L"TO"));
+							tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($2)));
+							tree<ASTN*>* cond = $5;
 
 							trans->add_child(*id);
 							trans->add_child(*cond);
@@ -486,12 +451,10 @@ transition_list 	: // nothing
 						}
 					| transition_list TO ID IF OPARENTHESIS expr CPARENTHESIS SEMICOLON
 						{
-							tree<ATNN::Node>* t = $1;
-							ATNN::Node astn1(new ASTN(L"TO"));
-							tree<ATNN::Node>* trans = new tree<ATNN::Node>(astn1);
-							ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($3)));
-							tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
-							tree<ATNN::Node>* cond = $6;
+							tree<ASTN*>* t = $1;
+							tree<ASTN*>* trans = new tree<ASTN*>(new ASTN(L"TO"));
+							tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($3)));
+							tree<ASTN*>* cond = $6;
 
 							trans->add_child(*id);
 							trans->add_child(*cond);
@@ -510,22 +473,20 @@ block_instructions	: OBRACER instruction_list CBRACER
 // The list of instructions
 instruction_list	: // nothing
 						{
-							ATNN::Node astn(new ASTN(L"BODY"));
-							$$ = new tree<ATNN::Node>(astn);
+							$$ = new tree<ASTN*>(new ASTN(L"BODY"));
 						}
 					| instruction
 						{
-							ATNN::Node astn(new ASTN(L"BODY"));
-							tree<ATNN::Node>* body = new tree<ATNN::Node>(astn);
-							tree<ATNN::Node>* instruction = $1;
+							tree<ASTN*>* body = new tree<ASTN*>(new ASTN(L"BODY"));
+							tree<ASTN*>* instruction = $1;
 
 							body->add_child(*instruction);
 							$$ = body;
 						}
 					| instruction_list instruction
 						{
-							tree<ATNN::Node>* body = $1;
-							tree<ATNN::Node>* instruction = $2;
+							tree<ASTN*>* body = $1;
+							tree<ASTN*>* instruction = $2;
 
 							body->add_child(*instruction);
 							$$ = body;
@@ -557,10 +518,9 @@ instruction
 // Assignment
 assign	: ids ASSIGMENT expr
 			{
-				ATNN::Node astn(new ASTN(L"ASSIGMENT"));
-				tree<ATNN::Node>* instr = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* id = $1;
-				tree<ATNN::Node>* body = $3;
+				tree<ASTN*>* instr = new tree<ASTN*>(new ASTN(L"ASSIGMENT"));
+				tree<ASTN*>* id = $1;
+				tree<ASTN*>* body = $3;
 
 				instr->add_child(*id);
 				instr->add_child(*body);
@@ -571,17 +531,13 @@ assign	: ids ASSIGMENT expr
 // Valid id
 ids 	: ID
 			{
-				ATNN::Node astn(new ASTN(L"TOKEN ID", converter.from_bytes($1)));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"TOKEN ID", converter.from_bytes($1)));
 			}
 		| ID DOT ID
 			{
-				ATNN::Node astn1(new ASTN(L"OBJECT ACCES"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn1);
-				ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($1)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
-				ATNN::Node astn3(new ASTN(L"POSITION", converter.from_bytes($3)));
-				tree<ATNN::Node>* pos = new tree<ATNN::Node>(astn3);
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"OBJECT ACCES"));
+				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+				tree<ASTN*>* pos = new tree<ASTN*>(new ASTN(L"POSITION", converter.from_bytes($3)));
 
 				n->add_child(*id);
 				n->add_child(*pos);
@@ -589,11 +545,9 @@ ids 	: ID
 			}
 		| ID OBRACKET expr CBRACKET
 			{
-				ATNN::Node astn1(new ASTN(L"ARRAY ACCES"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn1);
-				ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($1)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
-				tree<ATNN::Node>* pos = $3;
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"ARRAY ACCES"));
+				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+				tree<ASTN*>* pos = $3;
 
 				n->add_child(*id);
 				n->add_child(*pos);
@@ -604,12 +558,11 @@ ids 	: ID
 // if-then-else (else if & else are optionals)
 ite_stmt	: IF OPARENTHESIS expr CPARENTHESIS block_instructions else_if else
 				{
-					ATNN::Node astn(new ASTN(L"IF ELSE IF ELSE"));
-					tree<ATNN::Node>* ite = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* condition = $3;
-					tree<ATNN::Node>* body = $5;
-					tree<ATNN::Node>* elseif = $6;
-					tree<ATNN::Node>* else_tree = $7;
+					tree<ASTN*>* ite = new tree<ASTN*>(new ASTN(L"IF ELSE IF ELSE"));
+					tree<ASTN*>* condition = $3;
+					tree<ASTN*>* body = $5;
+					tree<ASTN*>* elseif = $6;
+					tree<ASTN*>* else_tree = $7;
 
 					ite->add_child(*condition);
 					ite->add_child(*body);
@@ -622,15 +575,13 @@ ite_stmt	: IF OPARENTHESIS expr CPARENTHESIS block_instructions else_if else
 // else-if
 else_if	: // nothing
 			{
-				ATNN::Node astn(new ASTN(L"ELSE IF"));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"ELSE IF"));
 			}
 		| ELSEIF OPARENTHESIS expr CPARENTHESIS block_instructions
 			{
-				ATNN::Node astn(new ASTN(L"ELSE IF"));
-				tree<ATNN::Node>* elif = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* condition = $3;
-				tree<ATNN::Node>* body = $5;
+				tree<ASTN*>* elif = new tree<ASTN*>(new ASTN(L"ELSE IF"));
+				tree<ASTN*>* condition = $3;
+				tree<ASTN*>* body = $5;
 
 				elif->add_child(*condition);
 				elif->add_child(*body);
@@ -638,9 +589,9 @@ else_if	: // nothing
 			}
 		| else_if ELSEIF OPARENTHESIS expr CPARENTHESIS block_instructions
 			{
-				tree<ATNN::Node>* elif = $1;
-				tree<ATNN::Node>* condition = $4;
-				tree<ATNN::Node>* body = $6;
+				tree<ASTN*>* elif = $1;
+				tree<ASTN*>* condition = $4;
+				tree<ASTN*>* body = $6;
 
 				elif->add_child(*condition);
 				elif->add_child(*body);
@@ -651,14 +602,12 @@ else_if	: // nothing
 // else
 else 	: // nothing
 			{
-				ATNN::Node astn(new ASTN(L"ELSE"));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"ELSE"));
 			}
 		| ELSE block_instructions
 			{
-				ATNN::Node astn(new ASTN(L"ELSE"));
-				tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* body = $2;
+				tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"ELSE"));
+				tree<ASTN*>* body = $2;
 
 				t->add_child(*body);
 				$$ = t;
@@ -668,10 +617,9 @@ else 	: // nothing
 // while statement
 while_stmt	: WHILE OPARENTHESIS expr CPARENTHESIS block_instructions
 				{
-					ATNN::Node astn(new ASTN(L"WHILE"));
-					tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* condition = $3;
-					tree<ATNN::Node>* body = $5;
+					tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"WHILE"));
+					tree<ASTN*>* condition = $3;
+					tree<ASTN*>* body = $5;
 
 					t->add_child(*condition);
 					t->add_child(*body);
@@ -682,12 +630,11 @@ while_stmt	: WHILE OPARENTHESIS expr CPARENTHESIS block_instructions
 // for statement
 for_stmt	: FOR OPARENTHESIS init SEMICOLON expr SEMICOLON incremental CPARENTHESIS block_instructions
 				{
-					ATNN::Node astn(new ASTN(L"FOR"));
-					tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* init = $3;
-					tree<ATNN::Node>* condition = $5;
-					tree<ATNN::Node>* final = $7;
-					tree<ATNN::Node>* body = $9;
+					tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"FOR"));
+					tree<ASTN*>* init = $3;
+					tree<ASTN*>* condition = $5;
+					tree<ASTN*>* final = $7;
+					tree<ASTN*>* body = $9;
 
 					t->add_child(*init);
 					t->add_child(*condition);
@@ -699,14 +646,14 @@ for_stmt	: FOR OPARENTHESIS init SEMICOLON expr SEMICOLON incremental CPARENTHES
 
 // assigment or nothing
 init 	: // nothing
-			{ ATNN::Node astn(new ASTN(L"ASSIGMENT")); $$ = new tree<ATNN::Node>(astn); }
+			{ $$ = new tree<ASTN*>(new ASTN(L"ASSIGMENT")); }
 		| assign
 			{ $$ = $1; }
 		;
 
 // assigment or expr
 incremental 	: // nothing
-					{ ATNN::Node astn(new ASTN(L"INCREMENTAL")); $$ = new tree<ATNN::Node>(astn); }
+					{ $$ = new tree<ASTN*>(new ASTN(L"INCREMENTAL")); }
 				| assign
 					{ $$ = $1; }
 				| double_arithmetic
@@ -716,10 +663,9 @@ incremental 	: // nothing
 // dowhile statement
 dowhile_stmt	: DO block_instructions WHILE OPARENTHESIS expr CPARENTHESIS
 				{
-					ATNN::Node astn(new ASTN(L"DO WHILE"));
-					tree<ATNN::Node>* dowhile = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* body = $2;
-					tree<ATNN::Node>* condition = $5;
+					tree<ASTN*>* dowhile = new tree<ASTN*>(new ASTN(L"DO WHILE"));
+					tree<ASTN*>* body = $2;
+					tree<ASTN*>* condition = $5;
 
 					dowhile->add_child(*body);
 					dowhile->add_child(*condition);
@@ -729,14 +675,12 @@ dowhile_stmt	: DO block_instructions WHILE OPARENTHESIS expr CPARENTHESIS
 // Return statement with an expression
 return_stmt	: RETURN
 				{
-					ATNN::Node astn(new ASTN(L"RETURN"));
-					$$ = new tree<ATNN::Node>(astn);
+					$$ = new tree<ASTN*>(new ASTN(L"RETURN"));
 				}
 			| RETURN expr
 				{
-					ATNN::Node astn(new ASTN(L"RETURN"));
-					tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* expr = $2;
+					tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"RETURN"));
+					tree<ASTN*>* expr = $2;
 
 					t->add_child(*expr);
 					$$ = t;
@@ -746,9 +690,8 @@ return_stmt	: RETURN
 // Print statement
 print_stmt 	: PRINT print_list
 				{
-					ATNN::Node astn(new ASTN(L"PRINT"));
-					tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* e = $2;
+					tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"PRINT"));
+					tree<ASTN*>* e = $2;
 
 					t->add_child(*e);
 					$$ = t;
@@ -758,17 +701,16 @@ print_stmt 	: PRINT print_list
 // list of exprsions to print
 print_list 	: PRINTSEPARATOR element_to_print
 				{
-					ATNN::Node astn(new ASTN(L"PRINT LIST"));
-					tree<ATNN::Node>* t = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* e = $2;
+					tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"PRINT LIST"));
+					tree<ASTN*>* e = $2;
 
 					t->add_child(*e);
 					$$ = t;
 				}
 			| print_list PRINTSEPARATOR element_to_print
 				{
-					tree<ATNN::Node>* t = $1;
-					tree<ATNN::Node>* e = $3;
+					tree<ASTN*>* t = $1;
+					tree<ASTN*>* e = $3;
 
 					t->add_child(*e);
 					$$ = t;
@@ -778,7 +720,7 @@ print_list 	: PRINTSEPARATOR element_to_print
 element_to_print 	: expr
 						{ $$ = $1; }
 					| ENDL
-						{ ATNN::Node astn(new ASTN(L"ENDL")); $$ = new tree<ATNN::Node>(astn); }
+						{ $$ = new tree<ASTN*>(new ASTN(L"ENDL")); }
 					;
 
 // Simple expression
@@ -792,38 +734,30 @@ expr : atom 					{ $$ = $1; }
 atom 	: BOOL
 			{
 				bool b = $1 == "true" || $1 == "TRUE";
-				ATNN::Node astn(new ASTN(L"TOKEN BOOL", b));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"TOKEN BOOL", b));
 			}
 		| INT
 			{
-				ATNN::Node astn(new ASTN(L"TOKEN INT", $1));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"TOKEN INT", $1));
 			}
 		| DOUBLE
 			{
-				ATNN::Node astn(new ASTN(L"TOKEN DOUBLE", $1));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"TOKEN DOUBLE", $1));
 			}
 		| STRING
 			{
 				string s = $1.substr(1, $1.length() - 2);
-				ATNN::Node astn(new ASTN(L"TOKEN STRING", converter.from_bytes(s)));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"TOKEN STRING", converter.from_bytes(s)));
 			}
 		| ID
 			{
-				ATNN::Node astn(new ASTN(L"TOKEN ID", converter.from_bytes($1)));
-				$$ = new tree<ATNN::Node>(astn);
+				$$ = new tree<ASTN*>(new ASTN(L"TOKEN ID", converter.from_bytes($1)));
 			}
 		| ID DOT ID
 			{
-				ATNN::Node astn1(new ASTN(L"OBJECT ACCES"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn1);
-				ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($1)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
-				ATNN::Node astn3(new ASTN(L"POSITION", converter.from_bytes($3)));
-				tree<ATNN::Node>* pos = new tree<ATNN::Node>(astn3);
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"OBJECT ACCES"));
+				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+				tree<ASTN*>* pos = new tree<ASTN*>(new ASTN(L"POSITION", converter.from_bytes($3)));
 
 				n->add_child(*id);
 				n->add_child(*pos);
@@ -831,11 +765,9 @@ atom 	: BOOL
 			}
 		| ID OBRACKET expr CBRACKET
 			{
-				ATNN::Node astn1(new ASTN(L"ARRAY ACCES"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn1);
-				ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($1)));
-				tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
-				tree<ATNN::Node>* pos = $3;
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"ARRAY ACCES"));
+				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+				tree<ASTN*>* pos = $3;
 
 				n->add_child(*id);
 				n->add_child(*pos);
@@ -843,18 +775,16 @@ atom 	: BOOL
 			}
 		| OBRACER object_list CBRACER
 			{
-				ATNN::Node astn(new ASTN(L"TOKEN OBJECT"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* list = $2;
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"TOKEN OBJECT"));
+				tree<ASTN*>* list = $2;
 
 				n->add_child(*list);
 				$$ = n;
 			}
 		| OBRACKET expr_list CBRACKET
 			{
-				ATNN::Node astn(new ASTN(L"TOKEN ARRAY"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* list = $2;
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"TOKEN ARRAY"));
+				tree<ASTN*>* list = $2;
 
 				n->add_child(*list);
 				$$ = n;
@@ -869,27 +799,24 @@ atom 	: BOOL
 			}
 		| NOT expr
 			{
-				ATNN::Node astn(new ASTN(L"NOT"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* expr = $2;
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"NOT"));
+				tree<ASTN*>* expr = $2;
 
 				n->add_child(*expr);
 				$$ = n;
 			}
 		| MINUS expr %prec NEG
 			{
-				ATNN::Node astn(new ASTN(L"NEG"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* expr = $2;
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"NEG"));
+				tree<ASTN*>* expr = $2;
 
 				n->add_child(*expr);
 				$$ = n;
 			}
 		| PLUS expr %prec POS
 			{
-				ATNN::Node astn(new ASTN(L"POS"));
-				tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* expr = $2;
+				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"POS"));
+				tree<ASTN*>* expr = $2;
 
 				n->add_child(*expr);
 				$$ = n;
@@ -904,10 +831,9 @@ atom 	: BOOL
 // Arithmetical expr
 arithmetical_expr 	: expr PLUS expr
 						{
-							ATNN::Node astn(new ASTN(L"PLUS"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>();
-							tree<ATNN::Node>* expr1 = $1;
-							tree<ATNN::Node>* expr2 = $3;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"PLUS"));
+							tree<ASTN*>* expr1 = $1;
+							tree<ASTN*>* expr2 = $3;
 
 							n->add_child(*expr1);
 							n->add_child(*expr2);
@@ -915,10 +841,9 @@ arithmetical_expr 	: expr PLUS expr
 						}
 					| expr MINUS expr
 						{
-							ATNN::Node astn(new ASTN(L"MINUS"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>();
-							tree<ATNN::Node>* expr1 = $1;
-							tree<ATNN::Node>* expr2 = $3;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"MINUS"));
+							tree<ASTN*>* expr1 = $1;
+							tree<ASTN*>* expr2 = $3;
 
 							n->add_child(*expr1);
 							n->add_child(*expr2);
@@ -926,10 +851,9 @@ arithmetical_expr 	: expr PLUS expr
 						}
 					| expr MULT expr
 						{
-							ATNN::Node astn(new ASTN(L"MULT"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>();
-							tree<ATNN::Node>* expr1 = $1;
-							tree<ATNN::Node>* expr2 = $3;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"MULT"));
+							tree<ASTN*>* expr1 = $1;
+							tree<ASTN*>* expr2 = $3;
 
 							n->add_child(*expr1);
 							n->add_child(*expr2);
@@ -937,10 +861,9 @@ arithmetical_expr 	: expr PLUS expr
 						}
 					| expr DIV expr
 						{
-							ATNN::Node astn(new ASTN(L"DIV"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>();
-							tree<ATNN::Node>* expr1 = $1;
-							tree<ATNN::Node>* expr2 = $3;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"DIV"));
+							tree<ASTN*>* expr1 = $1;
+							tree<ASTN*>* expr2 = $3;
 
 							n->add_child(*expr1);
 							n->add_child(*expr2);
@@ -948,10 +871,9 @@ arithmetical_expr 	: expr PLUS expr
 						}
 					| expr MOD expr
 						{
-							ATNN::Node astn(new ASTN(L"MOD"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>();
-							tree<ATNN::Node>* expr1 = $1;
-							tree<ATNN::Node>* expr2 = $3;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"MOD"));
+							tree<ASTN*>* expr1 = $1;
+							tree<ASTN*>* expr2 = $3;
 
 							n->add_child(*expr1);
 							n->add_child(*expr2);
@@ -962,10 +884,9 @@ arithmetical_expr 	: expr PLUS expr
 // Boolean expr
 boolean_expr 	: expr EQUAL expr
 					{
-						ATNN::Node astn(new ASTN(L"EQUAL"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"EQUAL"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -973,10 +894,9 @@ boolean_expr 	: expr EQUAL expr
 					}
 				| expr NOT_EQUAL expr
 					{
-						ATNN::Node astn(new ASTN(L"NOT_EQUAL"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"NOT_EQUAL"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -984,10 +904,9 @@ boolean_expr 	: expr EQUAL expr
 					}
 				| expr LT expr
 					{
-						ATNN::Node astn(new ASTN(L"LT"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"LT"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -995,10 +914,9 @@ boolean_expr 	: expr EQUAL expr
 					}
 				| expr LE expr
 					{
-						ATNN::Node astn(new ASTN(L"LE"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"LE"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -1006,10 +924,9 @@ boolean_expr 	: expr EQUAL expr
 					}
 				| expr GT expr
 					{
-						ATNN::Node astn(new ASTN(L"GT"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"GT"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -1017,10 +934,9 @@ boolean_expr 	: expr EQUAL expr
 					}
 				| expr GE expr
 					{
-						ATNN::Node astn(new ASTN(L"GE"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"GE"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -1028,10 +944,9 @@ boolean_expr 	: expr EQUAL expr
 					}
 				| expr AND expr
 					{
-						ATNN::Node astn(new ASTN(L"AND"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"AND"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -1039,10 +954,9 @@ boolean_expr 	: expr EQUAL expr
 					}
 				| expr OR expr
 					{
-						ATNN::Node astn(new ASTN(L"OR"));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* expr1 = $1;
-						tree<ATNN::Node>* expr2 = $3;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"OR"));
+						tree<ASTN*>* expr1 = $1;
+						tree<ASTN*>* expr2 = $3;
 
 						n->add_child(*expr1);
 						n->add_child(*expr2);
@@ -1053,11 +967,9 @@ boolean_expr 	: expr EQUAL expr
 // local functions
 local_functions : ID DOT LOCALFUNCTION OPARENTHESIS expr_list CPARENTHESIS
 					{
-						ATNN::Node astn1(new ASTN(L"LOCAL FUNCTION", converter.from_bytes($3)));
-						tree<ATNN::Node>* n = new tree<ATNN::Node>(astn1);
-						ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($1)));
-						tree<ATNN::Node>* id = new tree<ATNN::Node>(astn2);
-						tree<ATNN::Node>* list = $5;
+						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"LOCAL FUNCTION", converter.from_bytes($3)));
+						tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+						tree<ASTN*>* list = $5;
 
 						n->add_child(*id);
 						n->add_child(*list);
@@ -1068,36 +980,32 @@ local_functions : ID DOT LOCALFUNCTION OPARENTHESIS expr_list CPARENTHESIS
 // double plus or double minus
 double_arithmetic 	: DPLUS ids
 						{
-							ATNN::Node astn(new ASTN(L"DPLUS"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-							tree<ATNN::Node>* e = $2;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"DPLUS"));
+							tree<ASTN*>* e = $2;
 
 							n->add_child(*e);
 							$$ = n;
 						}
 					|  ids DPLUS
 						{
-							ATNN::Node astn(new ASTN(L"DPLUSR"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-							tree<ATNN::Node>* e = $1;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"DPLUSR"));
+							tree<ASTN*>* e = $1;
 
 							n->add_child(*e);
 							$$ = n;
 						}
 					| DMINUS ids
 						{
-							ATNN::Node astn(new ASTN(L"DMINUS"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-							tree<ATNN::Node>* e = $2;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"DMINUS"));
+							tree<ASTN*>* e = $2;
 
 							n->add_child(*e);
 							$$ = n;
 						}
 					| ids DMINUS
 						{
-							ATNN::Node astn(new ASTN(L"DMINUSR"));
-							tree<ATNN::Node>* n = new tree<ATNN::Node>(astn);
-							tree<ATNN::Node>* e = $1;
+							tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"DMINUSR"));
+							tree<ASTN*>* e = $1;
 
 							n->add_child(*e);
 							$$ = n;
@@ -1107,9 +1015,8 @@ double_arithmetic 	: DPLUS ids
 // A function call has a lits of arguments in parenthesis (possibly empty)
 funcall : ID OPARENTHESIS expr_list CPARENTHESIS
 			{
-				ATNN::Node astn(new ASTN(L"FUNCALL", converter.from_bytes($1)));
-				tree<ATNN::Node>* funcall = new tree<ATNN::Node>(astn);
-				tree<ATNN::Node>* list = $3;
+				tree<ASTN*>* funcall = new tree<ASTN*>(new ASTN(L"FUNCALL", converter.from_bytes($1)));
+				tree<ASTN*>* list = $3;
 
 				funcall->add_child(*list);
 				$$ = funcall;
@@ -1119,22 +1026,20 @@ funcall : ID OPARENTHESIS expr_list CPARENTHESIS
 // A list of expressions separated by commas
 expr_list	: // nothing
 				{
-					ATNN::Node astn(new ASTN(L"EXPR LIST"));
-					$$ = new tree<ATNN::Node>(astn);
+					$$ = new tree<ASTN*>(new ASTN(L"EXPR LIST"));
 				}
 			| expr
 				{
-					ATNN::Node astn(new ASTN(L"EXPR LIST"));
-					tree<ATNN::Node>* list = new tree<ATNN::Node>(astn);
-					tree<ATNN::Node>* expr = $1;
+					tree<ASTN*>* list = new tree<ASTN*>(new ASTN(L"EXPR LIST"));
+					tree<ASTN*>* expr = $1;
 
 					list->add_child(*expr);
 					$$ = list;
 				}
 			| expr_list COMMA expr
 				{
-					tree<ATNN::Node>* list = $1;
-					tree<ATNN::Node>* expr = $3;
+					tree<ASTN*>* list = $1;
+					tree<ASTN*>* expr = $3;
 
 					list->add_child(*expr);
 					$$ = list;
@@ -1144,16 +1049,13 @@ expr_list	: // nothing
 // A list of declarations of the items of a dictionary
 object_list 	: // nothing
 					{
-						ATNN::Node astn(new ASTN(L"OBJECT LIST"));
-						$$ = new tree<ATNN::Node>(astn);
+						$$ = new tree<ASTN*>(new ASTN(L"OBJECT LIST"));
 					}
 				| ID COLON expr
 					{
-						ATNN::Node astn1(new ASTN(L"OBJECT LIST"));
-						tree<ATNN::Node>* t = new tree<ATNN::Node>(astn1);
-						ATNN::Node astn2(new ASTN(L"ID", converter.from_bytes($1)));
-						tree<ATNN::Node>* obj = new tree<ATNN::Node>(astn2);
-						tree<ATNN::Node>* body = $3;
+						tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"OBJECT LIST"));
+						tree<ASTN*>* obj = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+						tree<ASTN*>* body = $3;
 
 						obj->add_child(*body);
 						t->add_child(*obj);
@@ -1161,10 +1063,9 @@ object_list 	: // nothing
 					}
 				| object_list COMMA ID COLON expr
 					{
-						tree<ATNN::Node>* t = $1;
-						ATNN::Node astn(new ASTN(L"ID", converter.from_bytes($3)));
-						tree<ATNN::Node>* obj = new tree<ATNN::Node>(astn);
-						tree<ATNN::Node>* body = $5;
+						tree<ASTN*>* t = $1;
+						tree<ASTN*>* obj = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($3)));
+						tree<ASTN*>* body = $5;
 
 						obj->add_child(*body);
 						t->add_child(*obj);
