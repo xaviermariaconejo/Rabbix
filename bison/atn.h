@@ -41,13 +41,8 @@ namespace ATN {
             };
 
             Atn();
+            Atn(std::wstring name);
             ~Atn();
-
-            /**
-             * Run parser. Results are stored inside.
-             * \returns 0 on success, 1 on failure
-             */
-            int parse();
             
             /**
              * Run interpreter. Results are stored inside.
@@ -63,13 +58,6 @@ namespace ATN {
              * Print AST, element could be the id of a global variable, function or ATN
              */
             std::string str();
-            
-            /**
-             * Switch scanner input stream. Default is standard input (std::cin).
-             * It will also reset AST.
-             */
-            void switchInputStream(std::istream *is);
-            void file(wstring ws);
 
             /**
              * This is needed so that Scanner and Parser can call some
@@ -80,17 +68,24 @@ namespace ATN {
             
         private:
             /**
-             * Used internally to print the AST.
+             * Run parser. Results are stored inside.
+             * \returns 0 on success, 1 on failure
              */
-            std::stringstream ASTPrint(const freeling::tree<ATNN::Node>& t, string tab);
-            std::stringstream ASTPrint(const freeling::tree<ASTN>& t, string tab);
+            int parse();
 
+            
+            /**
+             * Switch scanner input stream. Default is standard input (std::cin).
+             * It will also reset AST.
+             */
+            void switchInputStream(std::istream *is);
 
             /**
-             * Used internally by Parser to insert AST nodes.            
+             * Used internally to print the AST.
              */
-            void addMainElement(std::wstring ws, freeling::tree<ATNN::Node>* t);
-            void addMainElement(std::wstring ws, Data* d);
+            std::stringstream ASTPrint(const freeling::tree<ASTN*>& t, string tab);
+            std::stringstream ASTPrint(const ATNN& atn, string tab);
+
 
             /**
              * Used internally by Scanner YY_USER_ACTION to update location indicator.
@@ -117,75 +112,75 @@ namespace ATN {
              */
             unsigned int row() const;
 
-            /**
-             * Executes an atn.
-             */
-            void executeAtn(std::wstring atnName);
+           //  /**
+           //   * Executes an atn.
+           //   */
+           //  void executeAtn(std::wstring atnName);
 
-            /**
-             * Executes a state of an atn.
-             */
-            void executeState(const freeling::tree<ATNN::Node>& state, int i, int j, std::map<std::wstring, Data*>& global, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& finalStates, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& states, bool final);
+           //  /**
+           //   * Executes a state of an atn.
+           //   */
+           //  void executeState(const freeling::tree<ATNN::Node>& state, int i, int j, std::map<std::wstring, Data*>& global, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& finalStates, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& states, bool final);
 
-            /**
-             * Executes a function.
-             */
-            Data* executeFunction(std::wstring funcname, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
+           //  /**
+           //   * Executes a function.
+           //   */
+           //  Data* executeFunction(std::wstring funcname, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
 
-            /**
-             * Gathers the list of arguments of a function call. It also checks
-             * that the arguments are compatible with the parameters. In particular,
-             * it checks that the number of parameters is the same and that no
-             * expressions are passed as parametres by reference.
-             */
-            map<wstring, Data*> listArguments(const freeling::tree<ATNN::Node>::const_iterator& AstF, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
+           //  /**
+           //   * Gathers the list of arguments of a function call. It also checks
+           //   * that the arguments are compatible with the parameters. In particular,
+           //   * it checks that the number of parameters is the same and that no
+           //   * expressions are passed as parametres by reference.
+           //   */
+           //  map<wstring, Data*> listArguments(const freeling::tree<ATNN::Node>::const_iterator& AstF, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
 
-            /**
-             * Executes a block of instructions. The block is terminated
-             * as soon as an instruction returns a non-null result.
-             * Non-null results are only returned by "return" statements.
-             */
-            Data* executeListInstructions(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
+           //  /**
+           //   * Executes a block of instructions. The block is terminated
+           //   * as soon as an instruction returns a non-null result.
+           //   * Non-null results are only returned by "return" statements.
+           //   */
+           //  Data* executeListInstructions(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
 
-            /**
-             * Executes an instruction. 
-             * Non-null results are only returned by "return" statements.
-             */
-            Data* executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
+           //  *
+           //   * Executes an instruction. 
+           //   * Non-null results are only returned by "return" statements.
+             
+           //  Data* executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
 
-            /**
-             * Evaluates the expression represented in the AST t.
-             */
-            Data* evaluateExpression(const freeling::tree<ATNN::Node>::const_iterator& t, int input = -1);
+           //  /**
+           //   * Evaluates the expression represented in the AST t.
+           //   */
+           //  Data* evaluateExpression(const freeling::tree<ATNN::Node>::const_iterator& t, int input = -1);
 
-            /**
-             * Get de pointer Data of the TOKEN ID, ARRAY ACCES or OBJECT ACCES
-             * used in assigmanets, double arithmetic and andpersand
-             */
-            Data* getAccesData(const ASTN& t, const freeling::tree<ATNN::Node>::const_iterator& it, int input = -2);
+           //  /**
+           //   * Get de pointer Data of the TOKEN ID, ARRAY ACCES or OBJECT ACCES
+           //   * used in assigmanets, double arithmetic and andpersand
+           //   */
+           //  Data* getAccesData(const ASTN& t, const freeling::tree<ATNN::Node>::const_iterator& it, int input = -2);
             
-            /**
-             * Evaluation of Boolean expressions. This function implements
-             * a short-circuit evaluation. The second operand is still a tree
-             * and is only evaluated if the value of the expression cannot be
-             * determined by the first operand.
-             */
-            Data* evaluateBool(std::wstring type, Data* v, const freeling::tree<ATNN::Node>::const_iterator& t);
+           //  /**
+           //   * Evaluation of Boolean expressions. This function implements
+           //   * a short-circuit evaluation. The second operand is still a tree
+           //   * and is only evaluated if the value of the expression cannot be
+           //   * determined by the first operand.
+           //   */
+           //  Data* evaluateBool(std::wstring type, Data* v, const freeling::tree<ATNN::Node>::const_iterator& t);
             
-            /**
-             * Checks that the data is Boolean and raises an exception if it is not.
-             */
-            void checkBool(const Data* b);
+           //  /**
+           //   * Checks that the data is Boolean and raises an exception if it is not.
+           //   */
+           //  void checkBool(const Data* b);
     
-           /**
-            * Checks that the data is integer or double and raises an exception if it is not.
-            */
-            void checkNumeric(const Data* b);
+           // /**
+           //  * Checks that the data is integer or double and raises an exception if it is not.
+           //  */
+           //  void checkNumeric(const Data* b);
 
-            /**
-             * Prepare the string to print, check special characters
-             */
-            void printOutput(std::string s) const;
+           //  /**
+           //   * Prepare the string to print, check special characters
+           //   */
+           //  void printOutput(std::string s) const;
 
             
             wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;   // Converer wstring - string

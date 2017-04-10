@@ -54,11 +54,11 @@ void ATNN::setInitials(const std::vector<std::wstring>& v) {
 	m_initials = v;
 }
 
-void ATNN::setFinals(const std::map<std::wstring, freeling::tree<ATNN::Node>*>& m) {
+void ATNN::setFinals(const std::vector<std::wstring>& m) {
 	m_finals = m;
 }
 
-void ATNN::setStates(const std::map<std::wstring, freeling::tree<ATNN::Node>*>& m) {
+void ATNN::setStates(const std::map<std::wstring, freeling::tree<ASTN*>*>& m) {
 	m_states = m;
 }
 
@@ -74,18 +74,18 @@ const std::vector<std::wstring>& ATNN::getInitials() const {
 	return m_initials;
 }
 
-std::map<std::wstring, freeling::tree<ATNN::Node>*>& ATNN::getFinals() {
+std::vector<std::wstring>& ATNN::getFinals() {
 	return m_finals;
 }
 
-const std::map<std::wstring, freeling::tree<ATNN::Node>*>& ATNN::getFinals() const {
+const std::vector<std::wstring>& ATNN::getFinals() const {
 	return m_finals;
 }
 
-std::map<std::wstring, freeling::tree<ATNN::Node>*>& ATNN::getStates() {
+std::map<std::wstring, freeling::tree<ASTN*>*>& ATNN::getStates() {
 	return m_states;
 }
 
-const std::map<std::wstring, freeling::tree<ATNN::Node>*>& ATNN::getStates() const {
+const std::map<std::wstring, freeling::tree<ASTN*>*>& ATNN::getStates() const {
 	return m_states;
 }
