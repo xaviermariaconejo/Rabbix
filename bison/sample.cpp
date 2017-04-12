@@ -5,6 +5,8 @@
 #include <stack>
 #include <locale>
 #include <codecvt>
+#include <fstream>
+#include <sstream>
 #include "data.h"
 #include "astn.h"
 #include "atnn.h"
@@ -218,4 +220,14 @@ int main() {
 	// else { cout <<  "1.1" << endl; ASTN n1 = *(n.astn); }
 	// if (n.atn == nullptr) cout << "2" << endl;
 	// else { cout << "2.2" << endl; ATNN* n2 = n.atn; if (n2 == NULL) cout << "HI THERE"; }
+
+	ifstream file( "test4.atn" );
+    if (file)
+    {
+        stringstream buffer;
+        buffer << file.rdbuf();
+        file.close();
+
+        cout << buffer.str() << endl << endl;
+    }
 }

@@ -101,7 +101,7 @@ local_function 	"add"|"remove"|"indexOf"|"size"|"substring"|"lema"
 
 
 \n 		{ m_driver.increaseLocationRow(); }
-{ws}	{ cout << "HI THERE " << m_driver.row() << " " << m_driver.column() << endl;/* nothing */ }
+{ws}	{ /* nothing */ }
 "/*"	{
 			/* nothing */
 			int c;
@@ -118,8 +118,7 @@ local_function 	"add"|"remove"|"indexOf"|"size"|"substring"|"lema"
 				}
 			}
 		}
-.		{ cout << "NOT DEFINED: -" << yytext << "-" << endl; return ATN::Parser::make_NOT_DEFINED(ATN::location()); }
+.		{ cout << "NOT DEFINED: " << strdup(yytext) << endl; return ATN::Parser::make_NOT_DEFINED(ATN::location()); }
 <<EOF>>	{ return yyterminate(); }
-
 
 %%

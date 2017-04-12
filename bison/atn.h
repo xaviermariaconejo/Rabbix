@@ -111,78 +111,85 @@ namespace ATN {
              */
             unsigned int row() const;
 
-           //  /**
-           //   * Executes an atn.
-           //   */
-           //  void executeAtn(std::wstring atnName);
 
-           //  /**
-           //   * Executes a state of an atn.
-           //   */
-           //  void executeState(const freeling::tree<ATNN::Node>& state, int i, int j, std::map<std::wstring, Data*>& global, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& finalStates, const std::map<std::wstring, freeling::tree<ATNN::Node>*>& states, bool final);
+            /**
+             * Executes an atn.
+             */
+            vector<Output> executeAtn(std::wstring atnname, const std::vector<std::wstring>& in, int init, int act);
 
-           //  /**
-           //   * Executes a function.
-           //   */
-           //  Data* executeFunction(std::wstring funcname, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
+            /**
+             * Executes a state of an atn.
+             */
+            vector<Atn::Output> executeState(std::wstring atnname, const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int init, int act, std::map<std::wstring, Data*> global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final);
 
-           //  /**
-           //   * Gathers the list of arguments of a function call. It also checks
-           //   * that the arguments are compatible with the parameters. In particular,
-           //   * it checks that the number of parameters is the same and that no
-           //   * expressions are passed as parametres by reference.
-           //   */
-           //  map<wstring, Data*> listArguments(const freeling::tree<ATNN::Node>::const_iterator& AstF, const freeling::tree<ATNN::Node>::const_iterator& args, int input = -1);
+            /**
+             * Executes a function.
+             */
+            Data* executeFunction(std::wstring funcname, const freeling::tree<ASTN*>::const_iterator& args, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
 
-           //  /**
-           //   * Executes a block of instructions. The block is terminated
-           //   * as soon as an instruction returns a non-null result.
-           //   * Non-null results are only returned by "return" statements.
-           //   */
-           //  Data* executeListInstructions(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
+            /**
+             * Gathers the list of arguments of a function call. It also checks
+             * that the arguments are compatible with the parameters. In particular,
+             * it checks that the number of parameters is the same and that no
+             * expressions are passed as parametres by reference.
+             */
+            std::map<std::wstring, Data*> listArguments(const freeling::tree<ASTN*>::const_iterator& AstF, const freeling::tree<ASTN*>::const_iterator& args, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
 
-           //  *
-           //   * Executes an instruction. 
-           //   * Non-null results are only returned by "return" statements.
+            /**
+             * Executes a block of instructions. The block is terminated
+             * as soon as an instruction returns a non-null result.
+             * Non-null results are only returned by "return" statements.
+             */
+            Data* executeListInstructions(const freeling::tree<ASTN*>::const_iterator& t, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, bool final);
+
+            /**
+             * Executes an instruction. 
+             * Non-null results are only returned by "return" statements.
+             */
              
-           //  Data* executeInstruction(const freeling::tree<ATNN::Node>::const_iterator& t, bool final = false);
+            Data* executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, bool final);
 
-           //  /**
-           //   * Evaluates the expression represented in the AST t.
-           //   */
-           //  Data* evaluateExpression(const freeling::tree<ATNN::Node>::const_iterator& t, int input = -1);
+            /**
+             * Evaluates the expression represented in the AST t.
+             */
+            Data* evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
 
-           //  /**
-           //   * Get de pointer Data of the TOKEN ID, ARRAY ACCES or OBJECT ACCES
-           //   * used in assigmanets, double arithmetic and andpersand
-           //   */
-           //  Data* getAccesData(const ASTN& t, const freeling::tree<ATNN::Node>::const_iterator& it, int input = -2);
+            /**
+             * Get de pointer Data of the TOKEN ID, ARRAY ACCES or OBJECT ACCES
+             * used in assigmanets, double arithmetic and andpersand
+             */
+            Data* getAccesData(const ASTN& t, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
             
-           //  /**
-           //   * Evaluation of Boolean expressions. This function implements
-           //   * a short-circuit evaluation. The second operand is still a tree
-           //   * and is only evaluated if the value of the expression cannot be
-           //   * determined by the first operand.
-           //   */
-           //  Data* evaluateBool(std::wstring type, Data* v, const freeling::tree<ATNN::Node>::const_iterator& t);
-            
-           //  /**
-           //   * Checks that the data is Boolean and raises an exception if it is not.
-           //   */
-           //  void checkBool(const Data* b);
+            /**
+             * Evaluation of Boolean expressions. This function implements
+             * a short-circuit evaluation. The second operand is still a tree
+             * and is only evaluated if the value of the expression cannot be
+             * determined by the first operand.
+             */
+            Data* evaluateBool(std::wstring type, Data* v, const freeling::tree<ASTN*>::const_iterator& t, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
+           
+            /**
+             * Checks that the data is Boolean and raises an exception if it is not.
+             */
+            void checkBool(const Data* b) const;
     
-           // /**
-           //  * Checks that the data is integer or double and raises an exception if it is not.
-           //  */
-           //  void checkNumeric(const Data* b);
+           /**
+            * Checks that the data is integer or double and raises an exception if it is not.
+            */
+            void checkNumeric(const Data* b) const;
 
-           //  /**
-           //   * Prepare the string to print, check special characters
-           //   */
-           //  void printOutput(std::string s) const;
+            /**
+             * Prepare the string to print, check special characters
+             */
+            void printOutput(std::string s) const;
+
+            /**
+             * Find the element in the vector
+             */
+            int find(const std::vector<std::wstring>& v, std::wstring ws) const;
 
             
-            wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;   // Converer wstring - string
+            wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;               // Converer wstring - string
 
             Scanner m_scanner;
             Parser m_parser;
@@ -192,10 +199,13 @@ namespace ATN {
             std::map<std::wstring, ATNN* > m_atn;                                   // Map of ATN's
             std::map<std::wstring, Data* > m_global;                                // Map of global variables
 
-            std::stack< std::map<std::wstring, Data*> > m_stack;     // Stack of variables for the actual State
 
-            std::vector<std::wstring> m_input;                       // Vector of inputs
-            std::vector<Output> m_output;                            // Vector of outputs
+
+
+             // std::stack< std::map<std::wstring, Data*> > my_stack;     // Stack of variables for the actual State
+
+            // std::vector<std::wstring> m_input;                       // Vector of inputs
+            // std::vector<Output> m_output;                            // Vector of outputs
 
 
 

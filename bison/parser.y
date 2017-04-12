@@ -111,7 +111,7 @@
 %left	NEG POS NOT
 %right	POW
 
-%type < freeling::tree<ATN::ASTN*>* > mainElement func param_list param block_instructions ids init;
+%type < freeling::tree<ATN::ASTN*>* > /*mainElement*/ func param_list param block_instructions ids init;
 %type < freeling::tree<ATN::ASTN*>* > id_list state transition_list funcall element_to_print print_list;
 %type < freeling::tree<ATN::ASTN*>* > instruction_list instruction assign ite_stmt else_if else object_list;
 %type < freeling::tree<ATN::ASTN*>* > while_stmt for_stmt incremental dowhile_stmt return_stmt print_stmt expr;
@@ -129,8 +129,22 @@
 
 // A program is a list of main elements (ATN's, functions, global variables)
 program 	: { driver.clear(); }
-			| program mainElement
+			| program global SEMICOLON 
 				{
+					driver.m_global.insert($2.begin(), $2.end());
+				}
+			| program func
+	   			{
+	   				tree<ASTN*>* t = $2;
+	   				tree<ASTN*>::const_iterator it = t->begin();
+	   				driver.m_func[(*it)->getValueWstring()] = t;
+	   			}
+			| program atn
+	 			{
+	 				ATNN* t = $2;
+	   				driver.m_atn[t->getName()] = t;
+	 			}
+				//{
 					/* TODO eliminar todo esto
 					tree<ASTN*>* t = $2;
 					tree<ASTN*>::const_iterator it = t->begin();
@@ -151,11 +165,11 @@ program 	: { driver.clear(); }
 						driver.addMainElement((it->atn)->getName(), t);
 					}
 					*/
-				}
-		;
+				//}
+			;
 
 // A main element is an element as the type of: ATN, Function, Global variables
-mainElement	: global SEMICOLON 
+/*mainElement	: global SEMICOLON 
 				{
 					driver.m_global.insert($1.begin(), $1.end());
 				}
@@ -170,7 +184,7 @@ mainElement	: global SEMICOLON
 	 				ATNN* t = $1;
 	   				driver.m_atn[t->getName()] = t;
 	 			}
-			;
+			;*/
 
 // A global variable
 global 	: GLOBAL ID
