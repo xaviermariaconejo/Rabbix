@@ -1,4 +1,4 @@
-#include "ASTN.h"
+#include "astn.h"
 
 #include <iostream>
 #include <assert.h>
