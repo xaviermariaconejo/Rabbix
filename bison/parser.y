@@ -111,11 +111,12 @@
 %left	NEG POS NOT
 %right	POW
 
-%type < freeling::tree<ATN::ASTN*>* > mainElement func param_list param block_instructions ids init;
-%type < freeling::tree<ATN::ASTN*>* > id_list state transition_list funcall element_to_print print_list;
+%type < freeling::tree<ATN::ASTN*>* > func param_list param block_instructions ids init id_list;
+%type < freeling::tree<ATN::ASTN*>* > state transition_list funcall element_to_print print_list;
 %type < freeling::tree<ATN::ASTN*>* > instruction_list instruction assign ite_stmt else_if else object_list;
 %type < freeling::tree<ATN::ASTN*>* > while_stmt for_stmt incremental dowhile_stmt return_stmt print_stmt expr;
 %type < freeling::tree<ATN::ASTN*>* > atom arithmetical_expr boolean_expr expr_list local_functions double_arithmetic;
+
 %type < ATN::ATNN* > atn;
 %type < std::vector<std::wstring> > initials finals;
 %type < std::map<std::wstring, freeling::tree<ATN::ASTN*>*> > states;
@@ -127,47 +128,21 @@
 %%
 
 
-// A program is a list of main elements (ATN's, states, functions, global variables)
+// A program is a list of main elements (ATN's, functions, global variables)
 program 	: { driver.clear(); }
-			| program mainElement
+			| program global SEMICOLON 
 				{
-					/* TODO eliminar todo esto
-					tree<ASTN*>* t = $2;
-					tree<ASTN*>::const_iterator it = t->begin();
-					
-					if (it->astn != nullptr) {
-						wstring token = (it->astn)->getToken();
-						if (token == L"FUNCTION") {
-							driver.addMainElement((it->astn)->getValueWstring(), t);
-						}
-						else { // token == L"GLOBAL"
-							for (int i = 0; i < t->num_children(); ++i) {
-								tree<ASTN*>* tr = new tree<ASTN*>(it.nth_child_ref(i));
-								driver.addMainElement(((tr->begin())->astn)->getValueWstring(), new Data());
-							}
-						}
-					}
-					else { // it->atn != nullptr
-						driver.addMainElement((it->atn)->getName(), t);
-					}
-					*/
+					driver.m_global.insert($2.begin(), $2.end());
 				}
-		;
-
-// A main element is an element as the type of: ATN, Function, Global variables
-mainElement	: global SEMICOLON 
-				{
-					driver.m_global = $1;
-				}
-			| func
+			| program func
 	   			{
-	   				tree<ASTN*>* t = $1;
+	   				tree<ASTN*>* t = $2;
 	   				tree<ASTN*>::const_iterator it = t->begin();
 	   				driver.m_func[(*it)->getValueWstring()] = t;
 	   			}
-			| atn
+			| program atn
 	 			{
-	 				ATNN* t = $1;
+	 				ATNN* t = $2;
 	   				driver.m_atn[t->getName()] = t;
 	 			}
 			;
@@ -178,31 +153,12 @@ global 	: GLOBAL ID
 				map<wstring, Data* > m;
 				m[converter.from_bytes($2)] = new Data();
 				$$ = m;
-
-				/* TODO
-				ASTN* astn1(new ASTN(L"GLOBAL"));
-				tree<ASTN*>* t = new tree<ASTN*>(astn1);
-				ASTN* astn2(new ASTN(L"GLOBAL ID", converter.from_bytes($2)));
-				tree<ASTN*>* id = new tree<ASTN*>(astn2);
-
-				t->add_child(*id);
-				$$ = t;
-				*/
 			}
 		| global COMMA ID
 			{
 				map<wstring, Data* > m = $1;
 				m[converter.from_bytes($3)] = new Data();
 				$$ = m;
-
-				/* TODO
-				tree<ASTN*>* t = $1;
-				ASTN* astn(new ASTN(L"GLOBAL ID", converter.from_bytes($3)));
-				tree<ASTN*>* id = new tree<ASTN*>(astn);
-
-				t->add_child(*id);
-				$$ = t;
-				*/
 			}
 		;
 

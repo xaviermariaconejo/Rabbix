@@ -5,6 +5,8 @@
 #include <stack>
 #include <locale>
 #include <codecvt>
+#include <fstream>
+#include <sstream>
 #include "data.h"
 #include "astn.h"
 #include "atnn.h"
@@ -219,7 +221,13 @@ int main() {
 	// if (n.atn == nullptr) cout << "2" << endl;
 	// else { cout << "2.2" << endl; ATNN* n2 = n.atn; if (n2 == NULL) cout << "HI THERE"; }
 
-	vector<int> v = {1, 2, 3, 4};
-	auto it = std::find(v.begin(), v.end(), 1);
-	// cout << v.indexOf(1) << " " << v.indexOf(4) << " " << v.indexOf(0) << " " << v.indexOf(-1) << endl;
+	// ifstream file( "test4.atn" );
+ //    if (file)
+ //    {
+ //        stringstream buffer;
+ //        buffer << file.rdbuf();
+ //        file.close();
+
+ //        cout << buffer.str() << endl << endl;
+ //    }
 }

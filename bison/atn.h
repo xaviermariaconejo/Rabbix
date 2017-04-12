@@ -51,6 +51,12 @@ namespace ATN {
             ~Atn();
             
             /**
+             * Switch scanner input stream. Default is standard input (std::cin).
+             * It will also reset AST.
+             */
+            void switchInputStream(std::istream *is);
+            
+            /**
              * Run interpreter. Results are stored inside.
              */
             std::vector<Output> run(const std::vector<std::wstring>& in);
@@ -77,26 +83,14 @@ namespace ATN {
              * Run parser. Results are stored inside.
              * \returns 0 on success, 1 on failure
              */
-            int parse();
+            std::stringstream ASTPrint(const freeling::tree<ASTN*>& t, string tab);
+            std::stringstream ASTPrint(const ATNN& atn, string tab);
 
             /**
              * Switch scanner input stream. Default is standard input (std::cin).
              * It will also reset AST.
              */
             void switchInputStream(std::istream *is);
-
-            /**
-             * Used internally to print the AST.
-             */
-            std::stringstream ASTPrint(const freeling::tree<ASTN*>& t, string tab);
-            std::stringstream ASTPrint(const ATNN& atn, string tab);
-
-
-            // /** TODO Delete
-            //  * Used internally by Parser to insert AST nodes.            
-            //  */
-            // void addMainElement(std::wstring ws, freeling::tree<ATNN::Node>* t);
-            // void addMainElement(std::wstring ws, Data* d);
 
             /**
              * Used internally by Scanner YY_USER_ACTION to update location indicator.
@@ -127,17 +121,17 @@ namespace ATN {
             /**
              * Executes an atn.
              */
-            std::vector<Output> executeAtn(std::wstring atnName, const std::vector<std::wstring>& in, int init, int act);
+            vector<Output> executeAtn(std::wstring atnname, const std::vector<std::wstring>& in, int init, int act);
 
             /**
              * Executes a state of an atn.
              */
-            std::vector<Output> executeState(std::wstring atnname, const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int i, int j, std::map<std::wstring, Data*> global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final);
+            vector<Atn::Output> executeState(std::wstring atnname, const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int init, int act, std::map<std::wstring, Data*> global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final);
 
             /**
              * Executes a function.
              */
-            Data* executeFunction(std::wstring funcname, const freeling::tree<ASTN*>::const_iterator& args, std::map<std::wstring, Data*>& global, /*std::stack< std::map<std::wstring, Data*> > m_stack,*/ const std::vector<std::wstring>& in, int input);
+            Data* executeFunction(std::wstring funcname, const freeling::tree<ASTN*>::const_iterator& args, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
 
             /**
              * Gathers the list of arguments of a function call. It also checks
@@ -145,31 +139,31 @@ namespace ATN {
              * it checks that the number of parameters is the same and that no
              * expressions are passed as parametres by reference.
              */
-            std::map<std::wstring, Data*> listArguments(const freeling::tree<ASTN*>::const_iterator& AstF, const freeling::tree<ASTN*>::const_iterator& args, std::map<std::wstring, Data*>& global, /*std::stack< std::map<std::wstring, Data*> > m_stack,*/ const std::vector<std::wstring>& in, int input);
+            std::map<std::wstring, Data*> listArguments(const freeling::tree<ASTN*>::const_iterator& AstF, const freeling::tree<ASTN*>::const_iterator& args, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
 
             /**
              * Executes a block of instructions. The block is terminated
              * as soon as an instruction returns a non-null result.
              * Non-null results are only returned by "return" statements.
              */
-            Data* executeListInstructions(const freeling::tree<ASTN*>::const_iterator& t, std::map<std::wstring, Data*>& global, /*std::stack< std::map<std::wstring, Data*> > m_stack,*/ const std::vector<std::wstring>& in, bool final);
+            Data* executeListInstructions(const freeling::tree<ASTN*>::const_iterator& t, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, bool final);
 
             /**
              * Executes an instruction. 
              * Non-null results are only returned by "return" statements.
              */
-            Data* executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, /*std::stack< std::map<std::wstring, Data*> > m_stack,*/ const std::vector<std::wstring>& in, bool final);
+            Data* executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, bool final);
 
             /**
              * Evaluates the expression represented in the AST t.
              */
-            Data* evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, /*std::stack< std::map<std::wstring, Data*> > m_stack,*/ const std::vector<std::wstring>& in, int input);
+            Data* evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
 
             /**
              * Get de pointer Data of the TOKEN ID, ARRAY ACCES or OBJECT ACCES
              * used in assigmanets, double arithmetic and andpersand
              */
-            Data* getAccesData(const ASTN& t, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, /*std::stack< std::map<std::wstring, Data*> > m_stack,*/ const std::vector<std::wstring>& in, int input);
+            Data* getAccesData(const ASTN& t, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
             
             /**
              * Evaluation of Boolean expressions. This function implements
@@ -177,8 +171,8 @@ namespace ATN {
              * and is only evaluated if the value of the expression cannot be
              * determined by the first operand.
              */
-            Data* evaluateBool(std::wstring type, Data* v, const freeling::tree<ASTN*>::const_iterator& t, std::map<std::wstring, Data*>& global, /*std::stack< std::map<std::wstring, Data*> > m_stack,*/ const std::vector<std::wstring>& in, int input);
-            
+            Data* evaluateBool(std::wstring type, Data* v, const freeling::tree<ASTN*>::const_iterator& t, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
+           
             /**
              * Checks that the data is Boolean and raises an exception if it is not.
              */
@@ -200,7 +194,7 @@ namespace ATN {
             int find(const std::vector<std::wstring>& v, std::wstring ws) const;
 
             
-            static wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;  // Converer wstring - string
+            wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;               // Converer wstring - string
 
             Scanner m_scanner;
             Parser m_parser;
@@ -209,8 +203,6 @@ namespace ATN {
             std::map<std::wstring, freeling::tree<ASTN*>* > m_func;                 // Map of functions
             std::map<std::wstring, ATNN* > m_atn;                                   // Map of ATN's
             std::map<std::wstring, Data* > m_global;                                // Map of global variables
-
-            std::stack< std::map<std::wstring, Data* > > m_stack;
     };
     
 }
