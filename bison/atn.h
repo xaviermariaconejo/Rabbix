@@ -51,9 +51,10 @@ namespace ATN {
             ~Atn();
             
             /**
-             *
+             * Run parser. Results are stored inside.
+             * \returns 0 on success, 1 on failure
              */
-            int Atn::parse()
+            int parse();
 
             /**
              * Switch scanner input stream. Default is standard input (std::cin).
