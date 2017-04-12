@@ -51,6 +51,11 @@ namespace ATN {
             ~Atn();
             
             /**
+             *
+             */
+            int Atn::parse()
+
+            /**
              * Switch scanner input stream. Default is standard input (std::cin).
              * It will also reset AST.
              */
@@ -85,12 +90,6 @@ namespace ATN {
              */
             std::stringstream ASTPrint(const freeling::tree<ASTN*>& t, string tab);
             std::stringstream ASTPrint(const ATNN& atn, string tab);
-
-            /**
-             * Switch scanner input stream. Default is standard input (std::cin).
-             * It will also reset AST.
-             */
-            void switchInputStream(std::istream *is);
 
             /**
              * Used internally by Scanner YY_USER_ACTION to update location indicator.
