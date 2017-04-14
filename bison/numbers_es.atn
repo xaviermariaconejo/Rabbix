@@ -1,0 +1,268 @@
+function f (a, &b) {
+	print << a << b << endl;
+	a = 1; b = 2;
+	print << a << b << endl;
+}
+
+atn main {
+	initial states: a;
+	final states: c;
+
+	state a {
+		action {
+		/*
+			a = "hola";
+			print << a << endl;
+
+			b = [1, 2, 3, 4];
+			for (i = 0; i < b.size(); ++i) {
+				print << i << " " << b[i] << endl;
+			}
+
+			c = [
+				1,
+				"hola",
+				true,
+				[
+					"hi there",
+					[
+						3
+					]
+				]
+			];
+
+			print << c[0] << endl;
+			print << c[1] << endl;
+			print << c[2] << endl;
+			print << c[3][0] << endl;
+			print << c[3][1].size() << endl;
+			print << c[3][1][0] << endl;
+
+			aux = c[3];
+			print << aux[0] << endl;
+			aux = aux[1];
+			print << aux[0] << endl;
+
+			c = {
+				a: "hoola",
+				b: 0,
+				c: true,
+				d: [1, "sdbds"],
+				e: {
+					a: "hi threre"
+				}
+			};
+			print << c.a << endl;
+			print << c.b << endl;
+			print << c.c << endl;
+			for (i = 0; i < c.d.size(); ++i) {
+				print << c.d[i] << endl;
+			}			
+			print << c.e.a << endl;
+
+			a = "hola"; b = "adios";
+			print << endl << a << " " << b << endl;
+			f(a, b);
+			print << endl << a << " " << b << endl;
+
+			a = 0;
+			print << endl << ++a << " " << a << " " << a++ << " " << a << endl << endl;
+			a = [0, [0]];
+			print << endl << ++a[0] << " " << a[0] << " " << a[0]++ << " " << a[0] << endl << endl;
+			print << endl << ++a[1][0] << " " << a[1][0] << " " << a[1][0]++ << " " << a[1][0] << endl << endl;
+
+
+			s = "hola que tal";
+			print << endl << s << endl << s[0] << endl;
+			print << s.substring(0) << endl << s.substring(3) << endl << s.substring(4 + 1) << endl << endl;
+			print << s.substring(0, 3) << endl << s.substring(3, 1) << endl << s.substring(4 + 1, 7*10) << endl;
+			*/
+
+			a = [
+				0,
+				1,
+				"hola"
+			];
+			print << a.size() << " " << a.indexOf(0) << " " << a.indexOf("hola") << " " << a.indexOf("dew") << endl;
+			
+			a.push_back("dew");
+			print << a.size() << " " << a.indexOf(0) << " " << a.indexOf("hola") << " " << a.indexOf("dew") << endl << endl;
+
+			for (i = 0; i < a.size(); ++i) {
+				print << a[i] << endl;
+			}
+			print << endl;
+
+			a.remove(2);
+			for (i = 0; i < a.size(); ++i) {
+				print << a[i] << endl;
+			}
+			print << endl;
+
+
+			a.add(0, "new elem, pos 2");
+			for (i = 0; i < a.size(); ++i) {
+				print << a[i] << endl;
+			}
+			print << endl;
+
+		}
+
+		transition { }
+	}
+}
+
+
+/*
+global num;
+
+atn main {
+	initial states: a;
+	final states: c;
+
+	state a {
+		action {
+			num = 0;
+			print << "START" << endl;
+		}
+
+		transition {
+			to a1 if ($ == "uno");
+			to a2 if ($ == "dos");
+			to a3 if ($ == "tres");
+		}
+	}
+
+	state a1 {
+		action {
+			num = num + 1;
+			print << "1" << endl;
+		}
+
+		transition {
+			to a1 if ($ == "uno");
+			to a2 if ($ == "dos");
+			to a3 if ($ == "tres");
+		}
+	}
+
+	state a2 {
+		action {
+			num = num + 2;
+			print << "2" << endl;
+		}
+
+		transition {
+			to a1 if ($ == "uno");
+			to a2 if ($ == "dos");
+			to a3 if ($ == "tres");
+		}
+	}
+
+	state a3 {
+		action {
+			num = num + 3;
+			print << "3" << endl;
+		}
+
+		transition {
+			to a1 if ($ == "uno");
+			to a2 if ($ == "dos");
+			to a3 if ($ == "tres");
+		}
+	}
+}
+
+
+uno
+dos
+tres
+cuatro
+cinco
+seis
+siete
+ocho
+nueve
+diez
+
+once
+doce
+trece
+catorce
+quince
+dieciséis
+diecisiete
+dieciocho
+diecinueve
+veinte
+
+veintiuno
+veintidós
+veintitrés
+veinticuatro
+veinticinco
+veintiséis
+veintisiete
+veintiocho
+veintinueve
+treinta
+
+treinta y uno
+treinta y dos
+treinta y tres
+treinta y cuatro
+treinta y cinco
+treinta y seis
+treinta y siete
+treinta y ocho
+treinta y nueve
+cuarenta
+
+cuarenta y uno
+cuarenta y dos
+cuarenta y tres
+cuarenta y cuatro
+cuarenta y cinco
+cuarenta y seis
+cuarenta y siete
+cuarenta y ocho
+cuarenta y nueve
+cincuenta
+
+cincuenta y uno
+...
+
+cien
+ciento uno
+ciento dos
+ciento tres
+ciento cuatro
+ciento cinco
+ciento seis
+...
+ciento once
+ciento doce
+
+doscientos
+doscientos uno
+dosccientos dos
+doscientos tres
+...
+
+mil
+mil uno
+mil doce
+mil ciento tres
+mil quinientos
+...
+
+dos mil
+dos mil ciento cinquenta y tres
+
+diez mil doce
+cien mil trescientos cuarenta y siete
+
+
+
+
+*/

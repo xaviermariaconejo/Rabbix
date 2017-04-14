@@ -166,6 +166,11 @@ namespace ATN {
             Data* getAccesData(const ASTN& t, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
             
             /**
+             * Execute the local functions possibles
+             */
+            Data* executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in);
+
+            /**
              * Evaluation of Boolean expressions. This function implements
              * a short-circuit evaluation. The second operand is still a tree
              * and is only evaluated if the value of the expression cannot be

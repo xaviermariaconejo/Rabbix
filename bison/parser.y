@@ -467,6 +467,8 @@ instruction
 				{ $$ = $1; }
 		|	double_arithmetic SEMICOLON 	// Double plus or double minus 
 				{ $$ = $1; }
+		|	local_functions SEMICOLON 		// Local functions
+				{ $$ = $1; }
 		|	print_stmt SEMICOLON 			// Print statement
 				{ $$ = $1; }
 		;
@@ -489,20 +491,20 @@ ids 	: ID
 			{
 				$$ = new tree<ASTN*>(new ASTN(L"TOKEN ID", converter.from_bytes($1)));
 			}
-		| ID DOT ID
+		| ids DOT ID
 			{
 				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"OBJECT ACCES"));
-				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+				tree<ASTN*>* id = $1;
 				tree<ASTN*>* pos = new tree<ASTN*>(new ASTN(L"POSITION", converter.from_bytes($3)));
 
 				n->add_child(*id);
 				n->add_child(*pos);
 				$$ = n;
 			}
-		| ID OBRACKET expr CBRACKET
+		| ids OBRACKET expr CBRACKET
 			{
 				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"ARRAY ACCES"));
-				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+				tree<ASTN*>* id = $1;
 				tree<ASTN*>* pos = $3;
 
 				n->add_child(*id);
@@ -705,29 +707,9 @@ atom 	: BOOL
 				string s = $1.substr(1, $1.length() - 2);
 				$$ = new tree<ASTN*>(new ASTN(L"TOKEN STRING", converter.from_bytes(s)));
 			}
-		| ID
+		| ids
 			{
-				$$ = new tree<ASTN*>(new ASTN(L"TOKEN ID", converter.from_bytes($1)));
-			}
-		| ID DOT ID
-			{
-				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"OBJECT ACCES"));
-				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
-				tree<ASTN*>* pos = new tree<ASTN*>(new ASTN(L"POSITION", converter.from_bytes($3)));
-
-				n->add_child(*id);
-				n->add_child(*pos);
-				$$ = n;
-			}
-		| ID OBRACKET expr CBRACKET
-			{
-				tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"ARRAY ACCES"));
-				tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
-				tree<ASTN*>* pos = $3;
-
-				n->add_child(*id);
-				n->add_child(*pos);
-				$$ = n;
+				$$ = $1;
 			}
 		| OBRACER object_list CBRACER
 			{
@@ -921,10 +903,10 @@ boolean_expr 	: expr EQUAL expr
 				;
 
 // local functions
-local_functions : ID DOT LOCALFUNCTION OPARENTHESIS expr_list CPARENTHESIS
+local_functions : ids DOT LOCALFUNCTION OPARENTHESIS expr_list CPARENTHESIS
 					{
 						tree<ASTN*>* n = new tree<ASTN*>(new ASTN(L"LOCAL FUNCTION", converter.from_bytes($3)));
-						tree<ASTN*>* id = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+						tree<ASTN*>* id = $1;
 						tree<ASTN*>* list = $5;
 
 						n->add_child(*id);

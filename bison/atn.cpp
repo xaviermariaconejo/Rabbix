@@ -349,12 +349,12 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
     wstring type = node.getToken();
 
     if (type == L"ASSIGMENT") {
-        ASTN value1 = *(*(it.nth_child(0)));
-        wstring nameValue = value1.getValueWstring();
-        if (nameValue == L"$") throw runtime_error("The variable $ it's reserved for the input");
-        else if (!final && nameValue == L"@") throw runtime_error("The variable @ it's reserved for the output in final states");
+        ASTN token = *(*(it.nth_child(0)));
         Data* value2 = evaluateExpression(it.nth_child(1), global, m_stack, in, -1);
-        if (value1.getToken() == L"TOKEN ID") {
+        if (token.getToken() == L"TOKEN ID") {
+            wstring nameValue = token.getValueWstring();
+            if (nameValue == L"$") throw runtime_error("The variable $ it's reserved for the input");
+            else if (!final && nameValue == L"@") throw runtime_error("The variable @ it's reserved for the output in final states");
             if (global.find(nameValue) != global.end()) {
                 global[nameValue]->setDataValue(value2);
             }
@@ -365,18 +365,15 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
                 m_stack.top()[nameValue] = value2;
             }
         }
-        else if (value1.getToken() == L"ARRAY ACCES") {
-            Data* d = nullptr;
-            if (global.find(nameValue) != global.end()) d = global[nameValue];
-            else if (m_stack.top().find(nameValue) != m_stack.top().end()) d = m_stack.top()[nameValue];
-            if (d == nullptr || d->isArray() || d->isMap()) {
-                Data* pos = evaluateExpression(it.nth_child(1), global, m_stack, in, -1);
-                if (pos->isInt() && (d == nullptr || d->isArray())) {
-                    if (d == nullptr) d = new Data(vector<Data*>());
+        else if (token.getToken() == L"ARRAY ACCES") {
+            auto itAux = it.nth_child(0).nth_child(0);
+            Data* d = getAccesData(*(*(itAux)), itAux, global, m_stack, in, -2);
+            if (d->isArray() || d->isMap()) {
+                Data* pos = evaluateExpression(it.nth_child(0).nth_child(1), global, m_stack, in, -1);
+                if (pos->isInt() && d->isArray()) {
                     d->addArrayValue(pos->getIntValue(), value2);
                 }
-                else if (pos->isWstring() && (d == nullptr || d->isMap())) {
-                    if (d == nullptr) d = new Data(map<wstring, Data*>());
+                else if (pos->isWstring() && d->isMap()) {
                     d->addMapValue(pos->getWstringValue(), value2);
                 }
                 else {
@@ -385,19 +382,12 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
             }
             else throw runtime_error("Acces error: Invalid object");
         }
-        else if (value1.getToken() == L"OBJECT ACCES") {
-            Data* d = nullptr;
-            if (global.find(nameValue) != global.end()) d = global[nameValue];
-            if (m_stack.top().find(nameValue) != m_stack.top().end()) d = m_stack.top()[nameValue];
-            else d = new Data(map<wstring, Data*>());
+        else if (token.getToken() == L"OBJECT ACCES") {
+            auto itAux = it.nth_child(0).nth_child(0);
+            Data* d = getAccesData(*(*(itAux)), itAux, global, m_stack, in, -2);
             if (d->isMap()) {
-                Data* pos = evaluateExpression(it.nth_child(1), global, m_stack, in, -1);
-                if (pos->isWstring()) {
-                    d->addMapValue(pos->getWstringValue(), value2);
-                }
-                else {
-                    throw runtime_error("Key of the map have to be string");
-                }
+                ASTN pos = *(*(it.nth_child(0).nth_child(1)));
+                d->addMapValue(pos.getValueWstring(), value2);
             }
             else throw runtime_error("Acces error: Invalid object");
         }
@@ -407,7 +397,7 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
     else if (type == L"DPLUS" or type == L"DPLUSR") {
         assert(it.num_children() == 1);
         ASTN t = *(*(it.nth_child(0)));
-        Data* value = getAccesData(t, it, global, m_stack, in, -2);
+        Data* value = getAccesData(t, it.nth_child(0), global, m_stack, in, -2);
         checkNumeric(value);
         if (value->isInt()) {
             value->setIntValue(value->getIntValue() + 1);
@@ -421,7 +411,7 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
     else if (type == L"DMINUS" or type == L"DMINUSR") {
         assert(it.num_children() == 1);
         ASTN t = *(*(it.nth_child(0)));
-        Data* value = getAccesData(t, it, global, m_stack, in, -2);
+        Data* value = getAccesData(t, it.nth_child(0), global, m_stack, in, -2);
         checkNumeric(value);
         if (value->isInt()) {
             value->setIntValue(value->getIntValue() - 1);
@@ -502,6 +492,10 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
         executeFunction(node.getValueWstring(), it.nth_child(0), global, m_stack, in, -1);
         return nullptr;
     }
+    else if (type == L"LOCAL FUNCTION") {
+        executeLocalFunction(node, it, global, m_stack, in);
+        return nullptr;
+    }
     else assert(false);
 }
 
@@ -509,7 +503,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     Data *value1, *value2;
     ASTN node = *(*it);
     wstring type = node.getToken();
-        
+
     // Atoms
     if (type == L"TOKEN BOOL") {
         value1 = new Data(node.getValueBool());
@@ -551,40 +545,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     }
     // Array & Object operators
     else if (type == L"LOCAL FUNCTION") {
-        Data* d = nullptr;
-        ASTN* nodeId = *(it.nth_child(0));
-        wstring nameId = nodeId->getValueWstring();
-        if (global.find(nameId) != global.end()) {
-            d = global[nameId];
-        }
-        else if (m_stack.top().find(nameId) != m_stack.top().end()) {
-            d = m_stack.top()[nameId];
-        }
-        else throw runtime_error("The variable " + converter.to_bytes(nameId) + " can't be void");
-
-        if (node.getValueWstring() == L"size") {
-            if (d->isArray()) value1 = new Data(d->getSizeArray());
-            else if (d->isMap()) value1 = new Data(d->getSizeMap());
-            else if (d->isWstring()) value1 = new Data(d->getSizeWstring());
-            else throw runtime_error("Function size only viable with string, array or map");
-        }
-        else if (node.getValueWstring() == L"add") {
-            
-        }
-        else if (node.getValueWstring() == L"remove") {
-            
-        }
-        else if (node.getValueWstring() == L"indexOf") {
-            
-        }
-        else if (node.getValueWstring() == L"substring") {
-            
-        }
-        else if (input && node.getValueWstring() == L"lema") {
-
-        }//form tag
-        else throw runtime_error("function " + converter.to_bytes(node.getValueWstring()) + " indefined");
-        //TODO
+        value1 = executeLocalFunction(node, it, global, m_stack, in);
     }
     // Unary operators
     else if (type == L"NOT") {
@@ -613,7 +574,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     else if (type == L"DPLUS") {
         assert(it.num_children() == 1);
         ASTN t = *(*(it.nth_child(0)));
-        value1 = getAccesData(t, it, global, m_stack, in, -2);
+        value1 = getAccesData(t, it.nth_child(0), global, m_stack, in, -2);
         checkNumeric(value1);
         if (value1->isInt()) {
             value1->setIntValue(value1->getIntValue() + 1);
@@ -626,7 +587,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     else if (type == L"DPLUSR") {
         assert(it.num_children() == 1);
         ASTN t = *(*(it.nth_child(0)));
-        value2 = getAccesData(t, it, global, m_stack, in, -2);
+        value2 = getAccesData(t, it.nth_child(0), global, m_stack, in, -2);
         checkNumeric(value2);
         value1 = new Data(value2);
         if (value2->isInt()) {
@@ -640,7 +601,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     else if (type == L"DMINUS") {
         assert(it.num_children() == 1);
         ASTN t = *(*(it.nth_child(0)));
-        value1 =getAccesData(t, it, global, m_stack, in, -2);
+        value1 =getAccesData(t, it.nth_child(0), global, m_stack, in, -2);
         checkNumeric(value1);
         if (value1->isInt()) {
             value1->setIntValue(value1->getIntValue() - 1);
@@ -653,7 +614,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     else if (type == L"DMINUSR") {
         assert(it.num_children() == 1);
         ASTN t = *(*(it.nth_child(0)));
-        value2 = getAccesData(t, it, global, m_stack, in, -2);
+        value2 = getAccesData(t, it.nth_child(0), global, m_stack, in, -2);
         checkNumeric(value2);
         value1 = new Data(value2);
         if (value2->isInt()) {
@@ -709,17 +670,7 @@ Data* Atn::getAccesData(const ASTN& t, const freeling::tree<ASTN*>::const_iterat
     }
     else if (t.getToken() == L"ARRAY ACCES") {
         ASTN id = *(*(it.nth_child(0)));
-        Data* d = nullptr;
-        if (id.getValueWstring() == L"$") {
-            throw runtime_error("The variable $ it's reserved for the input");
-        }
-        if (global.find(id.getValueWstring()) != global.end()) {
-            d = global[id.getValueWstring()];
-        }
-        else if (m_stack.top().find(id.getValueWstring()) != m_stack.top().end()) {
-            d = m_stack.top()[id.getValueWstring()];
-        }
-        else throw runtime_error("Can not find the variable " + converter.to_bytes(t.getValueWstring()));
+        Data* d = getAccesData(id, it.nth_child(0), global, m_stack, in, input);
         if (d->isArray() || d->isMap()) {
             Data* pos = evaluateExpression(it.nth_child(1), global, m_stack, in, input);
             if (pos->isInt()) {
@@ -746,29 +697,117 @@ Data* Atn::getAccesData(const ASTN& t, const freeling::tree<ASTN*>::const_iterat
     }
     else if (t.getToken() == L"OBJECT ACCES") {
         ASTN id = *(*(it.nth_child(0)));
-        Data* d = nullptr;
-        if (id.getValueWstring() == L"$") {
-            throw runtime_error("The variable $ it's reserved for the input");
-        }
-        if (global.find(id.getValueWstring()) != global.end()) {
-            d = global[id.getValueWstring()];
-        }
-        else if (m_stack.top().find(id.getValueWstring()) != m_stack.top().end()) {
-            d = m_stack.top()[id.getValueWstring()];
-        }
-        else throw runtime_error("Can not find the variable " + converter.to_bytes(t.getValueWstring()));
+        Data* d = getAccesData(id, it.nth_child(0), global, m_stack, in, input);
         if (d->isMap()) {
-            Data* pos = evaluateExpression(it.nth_child(1), global, m_stack, in, input);
-            if (pos->isWstring()) {
-                v = d->getMapValue(pos->getWstringValue());
-            }
-            else {
-                throw runtime_error("Key of the map have to be string");
-            }
+            ASTN pos = *(*(it.nth_child(1)));
+            v = d->getMapValue(pos.getValueWstring());
         }
         else throw runtime_error("Acces error: Invalid object");
     }
     return v;
+}
+
+Data* Atn::executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in) {
+    Data* value = nullptr;
+    ASTN* nodeId = *(it.nth_child(0));
+    Data* d = getAccesData(*nodeId, it.nth_child(0), global, m_stack, in, -2);
+    if (node.getValueWstring() == L"size") {
+        if (it.nth_child(1).num_children() > 0) throw runtime_error("Function size has 0 parameters");
+        else if (d->isArray()) value = new Data(d->getSizeArray());
+        else if (d->isMap()) value = new Data(d->getSizeMap());
+        else if (d->isWstring()) value = new Data(d->getSizeWstring());
+        else throw runtime_error("Function size only viable with string, array or map");
+    }
+    else if (node.getValueWstring() == L"push_back") {
+        if (it.nth_child(1).num_children() != 1) throw runtime_error("Function push_back has 1 parameter");
+        else if (d->isArray()) {
+            auto param = it.nth_child(1).nth_child(0);
+            Data* dataP = evaluateExpression(param, global, m_stack, in, -1);
+            d->addArrayValue(dataP);
+            value = new Data(true);
+        }
+        else throw runtime_error("Function push_back only viable with array");
+    }
+    else if (node.getValueWstring() == L"add") {
+        if (it.nth_child(1).num_children() != 2) throw runtime_error("Function remove has 2 parameter");
+        else if (d->isArray()) {
+            auto param1 = it.nth_child(1).nth_child(0);
+            Data* dataP1 = evaluateExpression(param1, global, m_stack, in, -1);
+            if (dataP1->isInt()) {
+                auto param2 = it.nth_child(1).nth_child(1);
+                Data* dataP2 = evaluateExpression(param2, global, m_stack, in, -1);
+                d->addArrayValue(dataP1->getIntValue(), dataP2);
+                value = new Data(true);
+            }
+            else throw runtime_error("The first parameter of add has to be int when the object is an array");
+        }
+        else if (d->isMap()) {
+            auto param1 = it.nth_child(1).nth_child(0);
+            Data* dataP1 = evaluateExpression(param1, global, m_stack, in, -1);
+            if (dataP1->isWstring()) {
+                auto param2 = it.nth_child(1).nth_child(1);
+                Data* dataP2 = evaluateExpression(param2, global, m_stack, in, -1);
+                d->addMapValue(dataP1->getWstringValue(), dataP2);
+                value = new Data(true);
+            }
+            else throw runtime_error("The first parameter of remove has to be string when the object is an map");
+        }
+        else throw runtime_error("Function add only viable with array or map");
+    }
+    else if (node.getValueWstring() == L"remove") {
+        if (it.nth_child(1).num_children() != 1) throw runtime_error("Function remove has 1 parameter");
+        else if (d->isArray()) {
+            auto param = it.nth_child(1).nth_child(0);
+            Data* dataP = evaluateExpression(param, global, m_stack, in, -1);
+            if (dataP->isInt()) {
+                d->deleteArrayValue(dataP->getIntValue());
+                value = new Data(true);
+            }
+            else throw runtime_error("The parameter of remove has to be int when the object is an array");
+        }
+        else if (d->isMap()) {
+            auto param = it.nth_child(1).nth_child(0);
+            Data* dataP = evaluateExpression(param, global, m_stack, in, -1);
+            if (dataP->isWstring()) {
+                d->deleteMapValue(dataP->getWstringValue());
+                value = new Data(true);
+            }
+            else throw runtime_error("The parameter of remove has to be string when the object is an map");
+        }
+        else throw runtime_error("Function remove only viable with array or map");
+    }
+    else if (node.getValueWstring() == L"indexOf") {
+        if (it.nth_child(1).num_children() != 1) throw runtime_error("Function indexOf has 1 parameter");
+        else if (d->isArray()) {
+            auto param = it.nth_child(1).nth_child(0);
+            Data* dataP = evaluateExpression(param, global, m_stack, in, -1);
+            value = new Data(d->getIndexOfArray(dataP));
+        }
+        else throw runtime_error("Function indexOf only viable with array");
+        
+    }
+    else if (node.getValueWstring() == L"substring") {
+        int numC = it.nth_child(1).num_children();
+        if (numC == 0 || numC > 2) throw runtime_error("Function substring has 1 or 2 parameters");
+        else if (d->isWstring()) {
+            auto param1 = it.nth_child(1).nth_child(0);
+            Data* dataP1 = evaluateExpression(param1, global, m_stack, in, -1);
+            if (!dataP1->isInt()) throw runtime_error("Parameters of function substring have to be ints");
+            if (numC == 1) {
+                value = new Data((d->getWstringValue()).substr(dataP1->getIntValue()));
+            }
+            else {
+                auto param2 = it.nth_child(1).nth_child(1);
+                Data* dataP2 = evaluateExpression(param2, global, m_stack, in, -1);
+                if (!dataP2->isInt()) throw runtime_error("Parameters of function substring have to be ints");
+                value = new Data((d->getWstringValue()).substr(dataP1->getIntValue(), dataP2->getIntValue()));
+            }
+        }
+        else throw runtime_error("Function substring only viable with string");
+    }
+    /* INSERT HERE THE NEWS LOCAL FUNCTIONS, JUST LIKE THE OTHERS */
+    else throw runtime_error("function " + converter.to_bytes(node.getValueWstring()) + " indefined");
+    return value;
 }
 
 Data* Atn::evaluateBool(std::wstring type, Data* v, const freeling::tree<ASTN*>::const_iterator& t, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input) {

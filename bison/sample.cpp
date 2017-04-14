@@ -140,12 +140,12 @@ int main() {
 	// cout << (st.top()[0])->isInt() << " " << (st.top()[0])->isDouble() << endl;
 	
 
-	/*
-	wstring ws = L"JO:LA";
-	cout << string(ws.begin(), ws.end()) << endl;
-	wstring sub = ws.substr(0,1);
-	cout << string(sub.begin(), sub.end()) << endl;
-	*/
+	// wstring ws = L"JO:LA";
+	// cout << string(ws.begin(), ws.end()) << endl;
+	// wstring sub = ws.substr(0,1);
+	// cout << string(sub.begin(), sub.end()) << endl;
+	// sub = ws.substr(0);
+	// cout << string(sub.begin(), sub.end()) << endl;
 
 	/*
 	//TEST DATA

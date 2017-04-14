@@ -6,7 +6,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
     // Atn i;
-    Atn i(L"test4.atn");
+    Atn i(L"numbers_es.atn");
     // Atn<vector<string>, string> i;
 	// i.file(L"test4.atn");
 
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
 
     cout << i.str() << endl;
 
-    vector<wstring> v = {L"un", L"dos", L"tres"};
+    vector<wstring> v = {};
     vector<Atn::Output> output = i.run(v);
 
     cout << endl << "Output principal main" << endl;
