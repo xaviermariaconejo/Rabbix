@@ -51,7 +51,18 @@ void Atn::switchInputStream(std::istream *is) {
 }
 
 std::vector<Atn::Output> Atn::run(const std::vector<std::wstring>& in) {
-    return executeAtn(L"main", in, 0, 0);
+    map<std::wstring, Data*> copy_global;
+    for (auto it = m_global.begin(); it != m_global.end(); ++it) {
+        copy_global[it->first] = new Data(*(it->second));
+    }
+    vector<Atn::OutputInternal> v = executeAtn(L"main", copy_global, in, 0, 0);
+    checkOutput(v);
+
+    vector<Atn::Output> out = vector<Atn::Output>(v.size());
+    for (int i = 0; i < v.size(); ++i) {
+        out[i] = Output(v[i]);
+    }
+    return out;
 }
 
 Atn::~Atn() {
@@ -193,14 +204,14 @@ unsigned int Atn::row() const {
 
 
 
-std::vector<Atn::Output> Atn::executeAtn(std::wstring atnname, const std::vector<std::wstring>& in, int init, int act) {
+std::vector<Atn::OutputInternal> Atn::executeAtn(std::wstring atnname, std::map<std::wstring, Data*>& copy_global, const std::vector<std::wstring>& in, int init, int act) {
     // Get the data of the ATN
     auto atn_id = m_atn.find(atnname);
     if (atn_id == m_atn.end()) throw runtime_error(" atn " + converter.to_bytes(atnname) + " not declared");
     ATNN atn = *(atn_id->second);
 
     // Inicializate output
-    vector<Atn::Output> finalOutput;
+    vector<Atn::OutputInternal> finalOutput;
 
     // Execute all the initial states at the start of the input
     vector<wstring> initials = atn.getInitials();
@@ -211,35 +222,42 @@ std::vector<Atn::Output> Atn::executeAtn(std::wstring atnname, const std::vector
         auto st = states.find(stateInit);
         if (st == states.end()) throw runtime_error(" state " + converter.to_bytes(stateInit) + " not declared");
         int stateFinal = find(finals, stateInit);
-        vector<Atn::Output> output = executeState(atnname, in, *(st->second), init, act, m_global, finals, states, stateFinal > -1);
+        vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act, copy_global, finals, states, stateFinal > -1);
         finalOutput.insert( finalOutput.end(), output.begin(), output.end() );
+        checkOutput(finalOutput);
     }
 
     return finalOutput;
 }
 
-std::vector<Atn::Output> Atn::executeState(std::wstring atnname, const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int init, int act, std::map<std::wstring, Data*> global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final) {
-    vector<Atn::Output> actualOutput;
+std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int init, int act, std::map<std::wstring, Data*>& global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final) {
     // Inicializate de stack of the state & output
     std::stack< std::map<std::wstring, Data*> > m_stack; std::map<std::wstring, Data*> m;
     m_stack.push(m);
+    vector<Atn::OutputInternal> actualOutput;
 
     // Execute the list of instructions of the state, if
-    // the state is final, push the result in the vector 
+    // the state is final, push the result in the vector
     // of results
     executeListInstructions(((state.nth_child(0)).nth_child(0)).begin(), global, m_stack, in, final);
     if (final) {
         if (m_stack.top().find(L"@") != m_stack.top().end()) {
             Data* value = m_stack.top()[L"@"];
-            if (value->isWstring()) {
-                Output newOutput(init, act, value->getWstringValue());
+            if (!value->isVoid() && !value->isArray() && !value->isMap()) {
+                Atn::OutputInternal newOutput(init, act, value->toString());
+                map<wstring, Data*> copy_global;
+                for (auto it = global.begin(); it != global.end(); ++it) {
+                    copy_global[it->first] = new Data(*(it->second));
+                    newOutput.global[it->first] = new Data(*(it->second));
+                }
                 actualOutput.push_back(newOutput);
-                if (act < in.size()) {
-                    vector<Atn::Output> output = executeAtn(atnname, in, act, act);
+                 if (act < in.size()) {
+                    vector<Atn::OutputInternal> output = executeAtn(L"main", copy_global, in, act, act);
                     actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
+                    checkOutput(actualOutput);
                 }
             }
-            else throw runtime_error("The output value in @ has to be a string");
+            else throw runtime_error("The output value in @ has to be a string or a number");
         }
         else throw runtime_error("A final state need a valid string as output in the variable @");
     }
@@ -250,34 +268,58 @@ std::vector<Atn::Output> Atn::executeState(std::wstring atnname, const std::vect
     if (act < in.size()) {
         // Check all the transitions and go to
         // the state if the result is true
+        bool atLeastOne = false;
         auto list = state.nth_child(1);
         for (int i = 0; i < list.num_children(); ++i) {
+            // Check if is an atn or a expr
+            auto it = (list.nth_child(i)).nth_child(1);
+            ASTN* node = *(it.begin());
+            wstring token = node->getToken();
+
             // Get the data necessary
             wstring nextState = (*((list.nth_child(i)).nth_child(0)))->getValueWstring();
             auto st = states.find(nextState);
             if (st == states.end()) throw runtime_error(" state " + converter.to_bytes(nextState) + " not declared");
             int stateFinal = find(finals, nextState);
+            map<wstring, Data*> copy_global;
+            for (auto it = global.begin(); it != global.end(); ++it) {
+                copy_global[it->first] = new Data(*(it->second));
+            }
 
-            // Check if is an atn or a expr
-            auto it = (list.nth_child(i)).nth_child(1);
-            ASTN* node = *(it.begin());
-            wstring token = node->getToken();
             if (token == L"TOKEN ID" && m_atn.find(node->getValueWstring()) != m_atn.end()) { // expr is an atn
-                vector<Atn::Output> output = executeAtn(node->getValueWstring(), in, init, act);
+                atLeastOne = true;
+                vector<Atn::OutputInternal> output = executeAtn(node->getValueWstring(), copy_global, in, init, act);
                 actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
+                checkOutput(output);
                 for (int j = 0; j < output.size(); ++j) {
-                    vector<Atn::Output> newOutput = executeState(atnname, in, *(st->second), output[j].init, output[j].final, global, finals, states, stateFinal > -1);
+                    map<wstring, Data*> copy_global2;
+                    for (auto itAux = output[j].global.begin(); itAux != output[j].global.end(); ++itAux) {
+                        copy_global2[itAux->first] = new Data(*(itAux->second));
+                    }
+                    vector<Atn::OutputInternal> newOutput = executeState(in, *(st->second), output[j].init, output[j].final, copy_global2, finals, states, stateFinal > -1);
                     actualOutput.insert( actualOutput.end(), newOutput.begin(), newOutput.end() );
+                    checkOutput(actualOutput);
                 }
             }
             else { // expr is not an atn
-                Data* value = evaluateExpression(it, global, m_stack, in, act);
+                Data* value = evaluateExpression(it, copy_global, m_stack, in, act);
                 checkBool(value);
                 if (value->getBoolValue()) {
-                    vector<Atn::Output> output = executeState(atnname, in, *(st->second), init, act + 1, global, finals, states, stateFinal > -1);
+                    atLeastOne = true;
+                    vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act + 1, copy_global, finals, states, stateFinal > -1);
                     actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
+                    checkOutput(actualOutput);
                 }
             }
+        }
+        if (!atLeastOne && !final) {
+            map<wstring, Data*> copy_global;
+            for (auto it = global.begin(); it != global.end(); ++it) {
+                copy_global[it->first] = new Data(*(it->second));
+            }
+            vector<Atn::OutputInternal> output = executeAtn(L"main", copy_global, in, act + 1, act + 1);
+            actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
+            checkOutput(actualOutput);
         }
     }
     return actualOutput;
@@ -426,14 +468,14 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
         assert(it.num_children() == 4);
         Data* value = evaluateExpression(it.nth_child(0), global, m_stack, in, -1);
         checkBool(value);
-        if (value->getBoolValue()) return executeListInstructions(it.nth_child(1), global, m_stack, in, false);
+        if (value->getBoolValue()) return executeListInstructions(it.nth_child(1), global, m_stack, in, final);
         freeling::tree<ASTN*>::const_iterator it2 = it.nth_child(2);
         for (int i = 0; i < it2.num_children(); i = i + 2) {
             value = evaluateExpression(it2.nth_child(i), global, m_stack, in, -1);
             checkBool(value);
-            if (value->getBoolValue()) return executeListInstructions(it2.nth_child(i + 1), global, m_stack, in, false);
+            if (value->getBoolValue()) return executeListInstructions(it2.nth_child(i + 1), global, m_stack, in, final);
         }
-        if (it.nth_child(3).num_children() > 0) return executeListInstructions(it.nth_child(3).nth_child(0), global, m_stack, in, false);
+        if (it.nth_child(3).num_children() > 0) return executeListInstructions(it.nth_child(3).nth_child(0), global, m_stack, in, final);
         else return nullptr;
     }
     else if (type == L"WHILE") {
@@ -442,14 +484,14 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
             Data* value = evaluateExpression(it.nth_child(0), global, m_stack, in, -1);
             checkBool(value);
             if (!value->getBoolValue()) return nullptr;
-            Data* result = executeListInstructions(it.nth_child(1), global, m_stack, in, false);
+            Data* result = executeListInstructions(it.nth_child(1), global, m_stack, in, final);
             if (result != nullptr) return result;
         }
     }
     else if (type == L"DO WHILE") {
         assert(it.num_children() == 2);
         while (true) {
-            Data* result = executeListInstructions(it.nth_child(0), global, m_stack, in, false);
+            Data* result = executeListInstructions(it.nth_child(0), global, m_stack, in, final);
             if (result != nullptr) return result;
             Data* value = evaluateExpression(it.nth_child(1), global, m_stack, in, -1);
             checkBool(value);
@@ -458,14 +500,14 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
     }
     else if (type == L"FOR") {
         assert(it.num_children() == 4);
-        if (it.nth_child(0).num_children() > 0) executeInstruction(it.nth_child(0), global, m_stack, in, false);
+        if (it.nth_child(0).num_children() > 0) executeInstruction(it.nth_child(0), global, m_stack, in, final);
         while (true) {
             Data* value = evaluateExpression(it.nth_child(1), global, m_stack, in, -1);
             checkBool(value);
             if (!value->getBoolValue()) return nullptr;
-            Data* result = executeListInstructions(it.nth_child(3), global, m_stack, in, false);
+            Data* result = executeListInstructions(it.nth_child(3), global, m_stack, in, final);
             if (result != nullptr) return result;
-            if (it.nth_child(2).num_children() > 0) executeInstruction(it.nth_child(2), global, m_stack, in, false);
+            if (it.nth_child(2).num_children() > 0) executeInstruction(it.nth_child(2), global, m_stack, in, final);
         }
     }
     else if (type == L"RETURN") {
@@ -493,7 +535,7 @@ Data* Atn::executeInstruction(const freeling::tree<ASTN*>::const_iterator& it, s
         return nullptr;
     }
     else if (type == L"LOCAL FUNCTION") {
-        executeLocalFunction(node, it, global, m_stack, in);
+        executeLocalFunction(node, it, global, m_stack, in, -2);
         return nullptr;
     }
     else assert(false);
@@ -522,7 +564,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
         map<wstring, Data*> m;
         for (int i = 0; i < list.num_children(); ++i) {
             auto elem = list.nth_child(i);
-            m[(*elem)->getValueWstring()] = evaluateExpression(elem.nth_child(0), global, m_stack, in, -1);
+            m[(*elem)->getValueWstring()] = evaluateExpression(elem.nth_child(0), global, m_stack, in, input);
         }
         value1 = new Data(m);
     }
@@ -530,7 +572,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
         auto list = it.nth_child(0);
         vector<Data*> v(list.num_children());
         for (int i = 0; i < v.size(); ++i) {
-            v[i] = evaluateExpression(list.nth_child(i), global, m_stack, in, -1);
+            v[i] = evaluateExpression(list.nth_child(i), global, m_stack, in, input);
         }
         value1 = new Data(v);
     }
@@ -545,7 +587,7 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     }
     // Array & Object operators
     else if (type == L"LOCAL FUNCTION") {
-        value1 = executeLocalFunction(node, it, global, m_stack, in);
+        value1 = executeLocalFunction(node, it, global, m_stack, in, input);
     }
     // Unary operators
     else if (type == L"NOT") {
@@ -628,22 +670,22 @@ Data* Atn::evaluateExpression(const freeling::tree<ASTN*>::const_iterator& it, s
     // Relational operators
     else if (type == L"EQUAL" || type == L"NOT_EQUAL" || type == L"LT" || type == L"LE" || type == L"GT" || type == L"GE") {
         assert(it.num_children() == 2);
-        value1 = evaluateExpression(it.nth_child(0), global, m_stack, in, -1);
-        value2 = evaluateExpression(it.nth_child(1), global, m_stack, in, -1);
+        value1 = evaluateExpression(it.nth_child(0), global, m_stack, in, input);
+        value2 = evaluateExpression(it.nth_child(1), global, m_stack, in, input);
         value1 = value1->evaluateRelational(type, value2);
     }
     // Arithmetic operators
     else if (type == L"PLUS" || type == L"MINUS" || type == L"MULT" || type == L"DIV" || type == L"MOD") {
         assert(it.num_children() == 2);
-        value1 = evaluateExpression(it.nth_child(0), global, m_stack, in, -1);
-        value2 = evaluateExpression(it.nth_child(1), global, m_stack, in, -1);
+        value1 = evaluateExpression(it.nth_child(0), global, m_stack, in, input);
+        value2 = evaluateExpression(it.nth_child(1), global, m_stack, in, input);
         checkNumeric(value1); checkNumeric(value2);
         value1->evaluateArithmetic(type, value2);
     }
     // Boolean operators
     else if (type == L"AND" || type == L"OR") {
         assert(it.num_children() == 2);
-        value1 = evaluateExpression(it.nth_child(0), global, m_stack, in, -1);
+        value1 = evaluateExpression(it.nth_child(0), global, m_stack, in, input);
         checkBool(value1);
         value1 = evaluateBool(type, value1, it.nth_child(1), global, m_stack, in, input);
     }
@@ -707,10 +749,10 @@ Data* Atn::getAccesData(const ASTN& t, const freeling::tree<ASTN*>::const_iterat
     return v;
 }
 
-Data* Atn::executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in) {
+Data* Atn::executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input) {
     Data* value = nullptr;
     ASTN* nodeId = *(it.nth_child(0));
-    Data* d = getAccesData(*nodeId, it.nth_child(0), global, m_stack, in, -2);
+    Data* d = getAccesData(*nodeId, it.nth_child(0), global, m_stack, in, input);
     if (node.getValueWstring() == L"size") {
         if (it.nth_child(1).num_children() > 0) throw runtime_error("Function size has 0 parameters");
         else if (d->isArray()) value = new Data(d->getSizeArray());
@@ -791,19 +833,29 @@ Data* Atn::executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::c
         if (numC == 0 || numC > 2) throw runtime_error("Function substring has 1 or 2 parameters");
         else if (d->isWstring()) {
             auto param1 = it.nth_child(1).nth_child(0);
-            Data* dataP1 = evaluateExpression(param1, global, m_stack, in, -1);
+            Data* dataP1 = evaluateExpression(param1, global, m_stack, in, input);
             if (!dataP1->isInt()) throw runtime_error("Parameters of function substring have to be ints");
             if (numC == 1) {
                 value = new Data((d->getWstringValue()).substr(dataP1->getIntValue()));
             }
             else {
                 auto param2 = it.nth_child(1).nth_child(1);
-                Data* dataP2 = evaluateExpression(param2, global, m_stack, in, -1);
+                Data* dataP2 = evaluateExpression(param2, global, m_stack, in, input);
                 if (!dataP2->isInt()) throw runtime_error("Parameters of function substring have to be ints");
                 value = new Data((d->getWstringValue()).substr(dataP1->getIntValue(), dataP2->getIntValue()));
             }
         }
         else throw runtime_error("Function substring only viable with string");
+    }
+    else if (node.getValueWstring() == L"contain") {
+        if (it.nth_child(1).num_children() != 1) throw runtime_error("Function contain has 1 parameter");
+        else if (d->isMap()) {
+            auto param = it.nth_child(1).nth_child(0);
+            Data* dataP = evaluateExpression(param, global, m_stack, in, input);
+            if (!dataP->isWstring()) throw runtime_error("Parameter of function contain has to be string (the key)");
+            value = new Data(d->getContainMap(dataP->getWstringValue()));
+        }
+        else throw runtime_error("Function contain only viable with map");
     }
     /* INSERT HERE THE NEWS LOCAL FUNCTIONS, JUST LIKE THE OTHERS */
     else throw runtime_error("function " + converter.to_bytes(node.getValueWstring()) + " indefined");
@@ -869,6 +921,22 @@ void Atn::printOutput(std::string s) const {
     }
     printf("%s", s.c_str());
 }
+
+bool Atn::compareOutput(Atn::OutputInternal a, Atn::OutputInternal b) {
+    if ((a.final - a.init) < (b.final - b.init)) return true;
+    else if ((a.final - a.init) == (b.final - b.init) && a.info < b.info) return true;
+    else return false;
+}
+
+bool Atn::equalsOutput(Atn::OutputInternal a, Atn::OutputInternal b) {
+    return (a.init == b.init) && (a.final == b.final) && (a.info == b.info);
+}
+
+void Atn::checkOutput(std::vector<Atn::OutputInternal>& v) const {
+    sort (v.begin(), v.end(), compareOutput);
+    v.erase( unique( v.begin(), v.end(), equalsOutput ), v.end() );
+}
+
 
 int Atn::find(const std::vector<std::wstring>& v, std::wstring ws) const {
     int i = 0; bool b = false;

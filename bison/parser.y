@@ -989,20 +989,22 @@ object_list 	: // nothing
 					{
 						$$ = new tree<ASTN*>(new ASTN(L"OBJECT LIST"));
 					}
-				| ID COLON expr
+				| STRING COLON expr
 					{
 						tree<ASTN*>* t = new tree<ASTN*>(new ASTN(L"OBJECT LIST"));
-						tree<ASTN*>* obj = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($1)));
+						string s = $1.substr(1, $1.length() - 2);
+						tree<ASTN*>* obj = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes(s)));
 						tree<ASTN*>* body = $3;
 
 						obj->add_child(*body);
 						t->add_child(*obj);
 						$$ = t;
 					}
-				| object_list COMMA ID COLON expr
+				| object_list COMMA STRING COLON expr
 					{
 						tree<ASTN*>* t = $1;
-						tree<ASTN*>* obj = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes($3)));
+ 						string s = $3.substr(1, $3.length() - 2);
+						tree<ASTN*>* obj = new tree<ASTN*>(new ASTN(L"ID", converter.from_bytes(s)));
 						tree<ASTN*>* body = $5;
 
 						obj->add_child(*body);

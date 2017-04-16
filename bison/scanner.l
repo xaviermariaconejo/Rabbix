@@ -30,7 +30,7 @@ dig				[0-9]
 alpha			[a-zA-Z_]
 alphanum		[a-zA-Z0-9_]
 string			(\"(\\.|[^\\"])*\"|\'(\\.|[^\\'])*\')
-local_function 	"push_back"|"add"|"remove"|"indexOf"|"size"|"substring"
+local_function 	"push_back"|"add"|"remove"|"indexOf"|"contain"|"size"|"substring"
 
 
 %%

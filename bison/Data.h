@@ -142,6 +142,11 @@ namespace ATN {
 			 */
 			int getSizeMap() const;
 
+			/**
+			 * Return true if the data d is inside the map
+			 */
+			bool getContainMap(std::wstring ws) const;
+
 		    // Defines a Data value for the data
 			void setDataValue(const Data* d);
 

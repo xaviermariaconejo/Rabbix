@@ -5,6 +5,8 @@ using namespace ATN;
 using namespace std;
 
 int main(int argc, char **argv) {
+    wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;               // Converer wstring - string
+
     // Atn i;
     Atn i(L"numbers_es.atn");
     // Atn<vector<string>, string> i;
@@ -18,7 +20,12 @@ int main(int argc, char **argv) {
 
     cout << i.str() << endl;
 
-    vector<wstring> v = {};
+    string num;
+    vector<wstring> v;
+    while(cin >> num && num != "-1") {
+        v.push_back(converter.from_bytes(num));
+    }
+
     vector<Atn::Output> output = i.run(v);
 
     cout << endl << "Output principal main" << endl;
@@ -27,6 +34,6 @@ int main(int argc, char **argv) {
     	cout << "    INIT: " << out.init << endl;
     	cout << "    FINAL: " << out.final << endl;
     	wstring ws = out.info;
-    	cout << "    INFO: " << string(ws.begin(), ws.end()) << endl;
+    	cout << "    INFO: " << converter.to_bytes(ws) << endl << endl;
     } 
 }

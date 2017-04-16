@@ -257,6 +257,12 @@ int Data::getSizeMap() const {
 	return value_map.size();
 }
 
+bool Data::getContainMap(wstring ws) const {
+	assert(type == MAP);
+	auto it = value_map.find(ws);
+    return it != value_map.end();
+}
+
 void Data::setDataValue(const Data* d) {
 	clone(d);
 }
@@ -396,7 +402,7 @@ Data* Data::evaluateRelational (wstring op, Data* d) {
 		wstring ws1, ws2;
 		if (type == WSTRING) ws1 = value_wstring;
 		else ws1 = to_wstring(d1);
-		if (d->type == WSTRING) ws2 = value_wstring;
+		if (d->type == WSTRING) ws2 = d->value_wstring;
 		else ws2 = to_wstring(d2);
 
 		if (op == L"EQUAL") return new Data(ws1 == ws2);

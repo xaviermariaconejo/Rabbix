@@ -1,3 +1,230 @@
+global num, _1D, _2D, _3D, _4D, _45D;
+
+function init () {
+	num = 0;
+
+	_1D = {
+		"uno": 1,
+		"dos": 2,
+		"tres": 3,
+		"cuatro": 4,
+		"cinco": 5,
+		"seis": 6,
+		"siete": 7,
+		"ocho": 8,
+		"nueve": 9
+	};
+
+	_2D = {
+		"diez": 10,
+		"once": 11,
+		"doce": 12,
+		"trece": 13,
+		"catorce": 14,
+		"quince": 15,
+		"dieciséis": 16,
+		"diecisiete": 17,
+		"dieciocho": 18,
+		"diecinueve": 19,
+		"veinte": 20,
+		"veintiuno": 21,
+		"veintidós": 22,
+		"veintidos": 22,
+		"veintitrés": 23,
+		"veintitres": 23,
+		"veinticuatro": 24,
+		"veinticinco": 25,
+		"veintiséis": 26,
+		"veintiseis": 26,
+		"veintisiete": 27,
+		"veintiocho": 28,
+		"veintinueve": 29
+	};
+
+	_3D = {
+		"treinta": 30,
+		"cuarenta": 40,
+		"cincuenta": 50,
+		"sesenta": 60,
+		"setenta": 70,
+		"ochenta": 80,
+		"noventa": 90
+	};
+
+	_4D = {
+		"ciento": 100,
+		"doscientos": 200,
+		"trescientos": 300,
+		"cuatrocientos": 400,
+		"quinientos": 500,
+		"seiscientos": 600,
+		"sietecientos": 700,
+		"ochocientos": 800,
+		"nuevecientos": 900
+	};
+
+	_45D = {
+		"cien": 100  
+	};
+}
+
+function func (b, n) {
+	if (b.contain(n)) {
+		num = num + b[n];
+	}
+	return b.contain(n);
+}
+
+atn ATN3D {
+	initial states: start;
+	final states: D1, D2, D3, D4;
+
+	state start {
+		action {
+		}
+
+		transition {
+			to D1 if (func(_1D, $));
+			to D1 if (func(_2D, $));
+			to D1 if (func(_45D, $));
+			to D3 if (func(_3D, $));
+			to D4 if (func(_4D, $));
+		}
+	}
+
+	state D1 {
+		action {
+			@ = num;
+		}
+
+		transition { }
+	}
+
+	state D3 {
+		action {
+			@ = num;
+		}
+		transition {
+			to D35 if (true);
+		}
+	}
+
+	state D35 {
+		action { }
+		transition {
+			to D1 if (func(_1D, $));
+		}
+	}
+
+	state D4 {
+		action {
+			@ = num;
+		}
+		transition {
+			to D1 if (func(_1D, $));
+			to D1 if (func(_2D, $));
+			to D3 if (func(_3D, $));
+		}
+	}
+}
+
+atn main {
+	initial states: start;
+	final states: F1;
+
+	state start {
+		action {
+			init();
+		}
+
+		transition {
+			to M if (ATN3D);
+			to F1 if ($ == "mil");
+		}
+	}
+
+	state M {
+		action {
+		}
+
+		transition {
+			to F1 if (num != 1 && $ == "mil");
+		}
+	}
+
+	state F1 {
+		action {
+			if (num == 0) {
+				num = 1;
+			}
+			num = num * 1000;
+			@ = num;
+		}
+
+		transition {
+			to F2 if (ATN3D);
+		}
+	}
+
+	state F2 {
+		action {
+		}
+
+		transition { }
+	}
+}
+
+
+/*
+function f(a, b) {
+	print << a << " " << b << endl;
+	return true;
+}
+
+atn main {
+	initial states: start;
+	final states: final;
+
+	state start {
+		action {
+			print << "START MAIN" << endl;
+		}
+		transition {
+			to final if (second);
+		}
+	}
+
+	state final {
+		action {
+			@ = "FINAL MAIN";
+			print << "FINAL MAIN" << endl;
+		}
+		transition { }
+	}
+}
+
+atn second {
+	initial states: start;
+	final states: final;
+
+	state start {
+		action {
+			print << "START SECOND" << endl;
+		}
+		transition {
+			to final if (f($,"uno"));
+		}
+	}
+
+	state final {
+		action {
+			@ = "FINAL SECOND";
+			print << "FINAL SECOND" << endl;
+		}
+		transition { }
+	}
+}
+
 function f (a, &b) {
 	print << a << b << endl;
 	a = 1; b = 2;
@@ -10,7 +237,10 @@ atn main {
 
 	state a {
 		action {
-		/*
+
+			print << "1.5" < 2 << endl << "2.5" < 1 << endl << "1.5" == 2 << endl << "1.5" != 2 << endl << endl;
+
+			print << "b" < "a" << endl << "a" < "b" << endl << "a" == "b" << endl << "a" != "b" << endl;
 			a = "hola";
 			print << a << endl;
 
@@ -44,11 +274,11 @@ atn main {
 			print << aux[0] << endl;
 
 			c = {
-				a: "hoola",
-				b: 0,
-				c: true,
-				d: [1, "sdbds"],
-				e: {
+				"a": "hoola",
+				"b": 0,
+				"c": true,
+				"d": [1, "sdbds"],
+				"e": {
 					a: "hi threre"
 				}
 			};
@@ -76,7 +306,6 @@ atn main {
 			print << endl << s << endl << s[0] << endl;
 			print << s.substring(0) << endl << s.substring(3) << endl << s.substring(4 + 1) << endl << endl;
 			print << s.substring(0, 3) << endl << s.substring(3, 1) << endl << s.substring(4 + 1, 7*10) << endl;
-			*/
 
 			a = [
 				0,
@@ -100,7 +329,7 @@ atn main {
 			print << endl;
 
 
-			a.add(0, "new elem, pos 2");
+			a.add("hi there", "new elem, pos 2");
 			for (i = 0; i < a.size(); ++i) {
 				print << a[i] << endl;
 			}
@@ -109,67 +338,6 @@ atn main {
 		}
 
 		transition { }
-	}
-}
-
-
-/*
-global num;
-
-atn main {
-	initial states: a;
-	final states: c;
-
-	state a {
-		action {
-			num = 0;
-			print << "START" << endl;
-		}
-
-		transition {
-			to a1 if ($ == "uno");
-			to a2 if ($ == "dos");
-			to a3 if ($ == "tres");
-		}
-	}
-
-	state a1 {
-		action {
-			num = num + 1;
-			print << "1" << endl;
-		}
-
-		transition {
-			to a1 if ($ == "uno");
-			to a2 if ($ == "dos");
-			to a3 if ($ == "tres");
-		}
-	}
-
-	state a2 {
-		action {
-			num = num + 2;
-			print << "2" << endl;
-		}
-
-		transition {
-			to a1 if ($ == "uno");
-			to a2 if ($ == "dos");
-			to a3 if ($ == "tres");
-		}
-	}
-
-	state a3 {
-		action {
-			num = num + 3;
-			print << "3" << endl;
-		}
-
-		transition {
-			to a1 if ($ == "uno");
-			to a2 if ($ == "dos");
-			to a3 if ($ == "tres");
-		}
 	}
 }
 

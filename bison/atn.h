@@ -31,15 +31,31 @@ namespace ATN {
     class Atn
     {
         public:
+            
+            /**
+             *  Output internal
+             */
+            struct OutputInternal
+            {
+                OutputInternal(): init(), final(), info(), global() { }
+                OutputInternal(int i, int j): init(i), final(j), info(), global() { }
+                OutputInternal(int i, int j, std::wstring ws): init(i), final(j), info(ws), global() { }
+
+                int init;
+                int final;
+                std::wstring info;
+                std::map<std::wstring, Data*> global;
+            };
 
             /**
-             *
+             * Output for the main
              */
             struct Output
             {
-                Output() { }
-                Output(int i, int j): init(i), final(j) { }
+                Output(): init(), final(), info() { }
+                Output(int i, int j): init(i), final(j), info() { }
                 Output(int i, int j, std::wstring ws): init(i), final(j), info(ws) { }
+                Output(Atn::OutputInternal out): init(out.init), final(out.final), info(out.info) { }
 
                 int init;
                 int final;
@@ -121,12 +137,12 @@ namespace ATN {
             /**
              * Executes an atn.
              */
-            vector<Output> executeAtn(std::wstring atnname, const std::vector<std::wstring>& in, int init, int act);
+            vector<OutputInternal> executeAtn(std::wstring atnname, std::map<std::wstring, Data*>& copy_global, const std::vector<std::wstring>& in, int init, int act);
 
             /**
              * Executes a state of an atn.
              */
-            vector<Atn::Output> executeState(std::wstring atnname, const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int init, int act, std::map<std::wstring, Data*> global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final);
+            vector<OutputInternal> executeState(const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int init, int act, std::map<std::wstring, Data*>& global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final);
 
             /**
              * Executes a function.
@@ -168,7 +184,7 @@ namespace ATN {
             /**
              * Execute the local functions possibles
              */
-            Data* executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in);
+            Data* executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::const_iterator& it, std::map<std::wstring, Data*>& global, std::stack< std::map<std::wstring, Data*> >& m_stack, const std::vector<std::wstring>& in, int input);
 
             /**
              * Evaluation of Boolean expressions. This function implements
@@ -187,6 +203,21 @@ namespace ATN {
             * Checks that the data is integer or double and raises an exception if it is not.
             */
             void checkNumeric(const Data* b) const;
+
+            /**
+             * Check if exists equals outputs
+             */
+            void checkOutput(std::vector<OutputInternal>& v) const;
+
+            /**
+             * Compare outputs to sort
+             */
+            static bool compareOutput(OutputInternal a, OutputInternal b);
+
+            /**
+             * Compare outputs to equal
+             */
+            static bool equalsOutput(OutputInternal a, OutputInternal b);
 
             /**
              * Prepare the string to print, check special characters
