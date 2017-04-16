@@ -338,6 +338,28 @@ wstring Data::toString() const {
 	}
 }
 
+int Data::toInt() const {
+	assert(type != VOID && type != ARRAY && type != MAP);
+	switch (type) {
+		case BOOL: return value_bool ? 1 : 0;
+		case INT: return value_int;
+		case DOUBLE: return (int)value_double;
+		case WSTRING: return stoi(value_wstring);
+		default: assert(false);
+	}
+}
+
+double Data::toDouble() const {
+	assert(type != VOID && type != ARRAY && type != MAP);
+	switch (type) {
+		case BOOL: return value_bool ? 1.0 : 0.0;
+		case INT: return (double)value_int;
+		case DOUBLE: return value_double;
+		case WSTRING: return stod(value_wstring);
+		default: assert(false);
+	}
+}
+
 void Data::evaluateArithmetic (wstring op, Data* d) {
 	assert((type == INT || type == DOUBLE) && (d->type == INT || d->type == DOUBLE));
 	if (type == INT && d->type == INT) {

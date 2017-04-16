@@ -302,11 +302,16 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
                 }
             }
             else { // expr is not an atn
-                Data* value = evaluateExpression(it, copy_global, m_stack, in, act);
-                checkBool(value);
-                if (value->getBoolValue()) {
+                bool b = token == L"TOKEN STRING" && node->getValueWstring() == L"NULL";
+                int increment = b ? 0 : 1;
+                if (!b) {
+                    Data* value = evaluateExpression(it, copy_global, m_stack, in, act);
+                    checkBool(value);
+                    b = value->getBoolValue();
+                }
+                if (b) {
                     atLeastOne = true;
-                    vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act + 1, copy_global, finals, states, stateFinal > -1);
+                    vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act + increment, copy_global, finals, states, stateFinal > -1);
                     actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
                     checkOutput(actualOutput);
                 }
@@ -856,6 +861,24 @@ Data* Atn::executeLocalFunction(const ASTN& node, const freeling::tree<ASTN*>::c
             value = new Data(d->getContainMap(dataP->getWstringValue()));
         }
         else throw runtime_error("Function contain only viable with map");
+    }
+    else if (node.getValueWstring() == L"toString") {
+        if (it.nth_child(1).num_children() > 0) throw runtime_error("Function size has 0 parameters");
+        else if (d->isInt()) value = new Data(d->toString());
+        else if (d->isDouble()) value = new Data(d->toString());
+        else throw runtime_error("Function toString only viable with int or double");
+    }
+    else if (node.getValueWstring() == L"toInt") {
+        if (it.nth_child(1).num_children() > 0) throw runtime_error("Function size has 0 parameters");
+        else if (d->isWstring()) value = new Data(d->toInt());
+        else if (d->isDouble()) value = new Data(d->toInt());
+        else throw runtime_error("Function toInt only viable with string or double");
+    }
+    else if (node.getValueWstring() == L"toDouble") {
+        if (it.nth_child(1).num_children() > 0) throw runtime_error("Function size has 0 parameters");
+        else if (d->isInt()) value = new Data(d->toDouble());
+        else if (d->isWstring()) value = new Data(d->toDouble());
+        else throw runtime_error("Function toDouble only viable with int or string");
     }
     /* INSERT HERE THE NEWS LOCAL FUNCTIONS, JUST LIKE THE OTHERS */
     else throw runtime_error("function " + converter.to_bytes(node.getValueWstring()) + " indefined");

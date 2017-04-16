@@ -189,6 +189,12 @@ namespace ATN {
 		    // Returns a string representing the data in textual form.
 			std::wstring toString() const;
 
+		    // Returns a int representing the data in textual form.
+			int toInt() const;
+
+		    // Returns a double representing the data in textual form.
+			double toDouble() const;
+
 		    // Evaluation of arithmetic expressions. Returning the result on the same data.
 		    void evaluateArithmetic (std::wstring op, Data* d);
 
