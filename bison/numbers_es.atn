@@ -174,8 +174,8 @@ atn main {
 	}
 }
 
-/*
 
+/*
 function f(a, b) {
 	print << a << " " << b << endl;
 	return true;

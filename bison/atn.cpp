@@ -323,6 +323,9 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
                             value = evaluateExpression(it.nth_child(1), copy_global, copy_stack, in, act);
                             increment = 0;
                         }
+                        else {
+                            value = evaluateExpression(it, copy_global, copy_stack, in, act);
+                        }
                     }
                     else {
                         value = evaluateExpression(it, copy_global, copy_stack, in, act);
