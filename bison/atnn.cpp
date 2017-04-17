@@ -1,5 +1,5 @@
 #include "atnn.h"
-
+ 
 using namespace ATN;
 
 void ATNN::clone(const ATNN& n) {
@@ -51,11 +51,19 @@ void ATNN::setName(std::wstring name) {
 }
 
 void ATNN::setInitials(const std::vector<std::wstring>& v) {
+	for (int i = 0; i < m_finals.size(); ++i) {
+		if (std::find(v.begin(), v.end(), m_finals[i]) != v.end())
+            throw std::runtime_error("The same state can't be initial and final");
+	}
 	m_initials = v;
 }
 
-void ATNN::setFinals(const std::vector<std::wstring>& m) {
-	m_finals = m;
+void ATNN::setFinals(const std::vector<std::wstring>& v) {
+	for (int i = 0; i < m_initials.size(); ++i) {
+		if (std::find(v.begin(), v.end(), m_initials[i]) != v.end())
+            throw std::runtime_error("The same state can't be initial and final");
+	}
+	m_finals = v;
 }
 
 void ATNN::setStates(const std::map<std::wstring, freeling::tree<ASTN*>*>& m) {

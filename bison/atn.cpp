@@ -221,8 +221,8 @@ std::vector<Atn::OutputInternal> Atn::executeAtn(std::wstring atnname, std::map<
         wstring stateInit = initials[i];
         auto st = states.find(stateInit);
         if (st == states.end()) throw runtime_error(" state " + converter.to_bytes(stateInit) + " not declared");
-        int stateFinal = find(finals, stateInit);
-        vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act, copy_global, finals, states, stateFinal > -1);
+        auto stateFinal = std::find(finals.begin(), finals.end(), stateInit);
+        vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act, copy_global, finals, states, stateFinal != finals.end());
         finalOutput.insert( finalOutput.end(), output.begin(), output.end() );
         checkOutput(finalOutput);
     }
@@ -245,6 +245,7 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
             Data* value = m_stack.top()[L"@"];
             if (!value->isVoid() && !value->isArray() && !value->isMap()) {
                 Atn::OutputInternal newOutput(init, act, value->toString());
+                // Copy to mantain consistency
                 map<wstring, Data*> copy_global;
                 for (auto it = global.begin(); it != global.end(); ++it) {
                     copy_global[it->first] = new Data(*(it->second));
@@ -262,9 +263,6 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
         else throw runtime_error("A final state need a valid string as output in the variable @");
     }
 
-    // Erase the lvl of the stack for this state
-    m_stack.pop();
-
     if (act < in.size()) {
         // Check all the transitions and go to
         // the state if the result is true
@@ -280,7 +278,9 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
             wstring nextState = (*((list.nth_child(i)).nth_child(0)))->getValueWstring();
             auto st = states.find(nextState);
             if (st == states.end()) throw runtime_error(" state " + converter.to_bytes(nextState) + " not declared");
-            int stateFinal = find(finals, nextState);
+            auto stateFinal = std::find(finals.begin(), finals.end(), nextState);
+
+            // Copy to mantain consistency
             map<wstring, Data*> copy_global;
             for (auto it = global.begin(); it != global.end(); ++it) {
                 copy_global[it->first] = new Data(*(it->second));
@@ -292,32 +292,55 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
                 actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
                 checkOutput(output);
                 for (int j = 0; j < output.size(); ++j) {
+                    // Copy to mantain consistency
                     map<wstring, Data*> copy_global2;
                     for (auto itAux = output[j].global.begin(); itAux != output[j].global.end(); ++itAux) {
                         copy_global2[itAux->first] = new Data(*(itAux->second));
                     }
-                    vector<Atn::OutputInternal> newOutput = executeState(in, *(st->second), output[j].init, output[j].final, copy_global2, finals, states, stateFinal > -1);
+                    vector<Atn::OutputInternal> newOutput = executeState(in, *(st->second), output[j].init, output[j].final, copy_global2, finals, states, stateFinal != finals.end());
                     actualOutput.insert( actualOutput.end(), newOutput.begin(), newOutput.end() );
                     checkOutput(actualOutput);
                 }
             }
             else { // expr is not an atn
+                // bool b = token == L"TOKEN STRING" && node->getValueWstring() == L"NULL";
+                // int increment = b ? 0 : 1;
                 bool b = token == L"TOKEN STRING" && node->getValueWstring() == L"NULL";
                 int increment = b ? 0 : 1;
                 if (!b) {
-                    Data* value = evaluateExpression(it, copy_global, m_stack, in, act);
+                    // Copy to mantain consistency, but m_stack has only one lvl
+                    std::stack< std::map<std::wstring, Data*> > copy_stack;
+                    std::map<std::wstring, Data*> copy_map;
+                    for (auto it = m_stack.top().begin(); it != m_stack.top().end(); ++it) {
+                        copy_map[it->first] = new Data(*(it->second));
+                    }
+                    copy_stack.push(copy_map);
+
+                    Data* value;
+                    if (token == L"AND") {
+                        ASTN* tkn = *((it.nth_child(0)).begin());
+                        if (tkn->getToken() == L"TOKEN STRING" && tkn->getValueWstring() == L"NULL") {
+                            value = evaluateExpression(it.nth_child(1), copy_global, copy_stack, in, act);
+                            increment = 0;
+                        }
+                    }
+                    else {
+                        value = evaluateExpression(it, copy_global, copy_stack, in, act);
+                    }
                     checkBool(value);
                     b = value->getBoolValue();
                 }
+
                 if (b) {
                     atLeastOne = true;
-                    vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act + increment, copy_global, finals, states, stateFinal > -1);
+                    vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act + increment, copy_global, finals, states, stateFinal != finals.end());
                     actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
                     checkOutput(actualOutput);
                 }
             }
         }
         if (!atLeastOne && !final) {
+            // Copy to mantain consistency
             map<wstring, Data*> copy_global;
             for (auto it = global.begin(); it != global.end(); ++it) {
                 copy_global[it->first] = new Data(*(it->second));
@@ -958,15 +981,4 @@ bool Atn::equalsOutput(Atn::OutputInternal a, Atn::OutputInternal b) {
 void Atn::checkOutput(std::vector<Atn::OutputInternal>& v) const {
     sort (v.begin(), v.end(), compareOutput);
     v.erase( unique( v.begin(), v.end(), equalsOutput ), v.end() );
-}
-
-
-int Atn::find(const std::vector<std::wstring>& v, std::wstring ws) const {
-    int i = 0; bool b = false;
-    while(i < v.size() && !b) {
-        wstring abc = v[i];
-        b = (v[i++] == ws);
-    }
-    if (!b) i = -1;
-    return i;
 }

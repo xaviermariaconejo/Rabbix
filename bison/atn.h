@@ -1,10 +1,8 @@
 #ifndef ATN_H
 #define ATN_H
 
-#include <locale>
 #include <codecvt>
 #include <stack>
-#include <list>
 #include <map>
 
 #include "data.h"
@@ -223,11 +221,6 @@ namespace ATN {
              * Prepare the string to print, check special characters
              */
             void printOutput(std::string s) const;
-
-            /**
-             * Find the element in the vector
-             */
-            int find(const std::vector<std::wstring>& v, std::wstring ws) const;
 
             
             wstring_convert< codecvt_utf8_utf16<wchar_t> > converter;               // Converer wstring - string
