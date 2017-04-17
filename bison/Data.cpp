@@ -257,6 +257,12 @@ int Data::getSizeMap() const {
 	return value_map.size();
 }
 
+bool Data::getContainMap(wstring ws) const {
+	assert(type == MAP);
+	auto it = value_map.find(ws);
+    return it != value_map.end();
+}
+
 void Data::setDataValue(const Data* d) {
 	clone(d);
 }
@@ -332,6 +338,28 @@ wstring Data::toString() const {
 	}
 }
 
+int Data::toInt() const {
+	assert(type != VOID && type != ARRAY && type != MAP);
+	switch (type) {
+		case BOOL: return value_bool ? 1 : 0;
+		case INT: return value_int;
+		case DOUBLE: return (int)value_double;
+		case WSTRING: return stoi(value_wstring);
+		default: assert(false);
+	}
+}
+
+double Data::toDouble() const {
+	assert(type != VOID && type != ARRAY && type != MAP);
+	switch (type) {
+		case BOOL: return value_bool ? 1.0 : 0.0;
+		case INT: return (double)value_int;
+		case DOUBLE: return value_double;
+		case WSTRING: return stod(value_wstring);
+		default: assert(false);
+	}
+}
+
 void Data::evaluateArithmetic (wstring op, Data* d) {
 	assert((type == INT || type == DOUBLE) && (d->type == INT || d->type == DOUBLE));
 	if (type == INT && d->type == INT) {
@@ -396,7 +424,7 @@ Data* Data::evaluateRelational (wstring op, Data* d) {
 		wstring ws1, ws2;
 		if (type == WSTRING) ws1 = value_wstring;
 		else ws1 = to_wstring(d1);
-		if (d->type == WSTRING) ws2 = value_wstring;
+		if (d->type == WSTRING) ws2 = d->value_wstring;
 		else ws2 = to_wstring(d2);
 
 		if (op == L"EQUAL") return new Data(ws1 == ws2);

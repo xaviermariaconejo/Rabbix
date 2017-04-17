@@ -1,7 +1,7 @@
 #ifndef DATA_H
 #define DATA_H
 
-#include <iostream>
+#include <string>
 #include <vector>
 #include <map>
 
@@ -142,6 +142,11 @@ namespace ATN {
 			 */
 			int getSizeMap() const;
 
+			/**
+			 * Return true if the data d is inside the map
+			 */
+			bool getContainMap(std::wstring ws) const;
+
 		    // Defines a Data value for the data
 			void setDataValue(const Data* d);
 
@@ -183,6 +188,12 @@ namespace ATN {
 
 		    // Returns a string representing the data in textual form.
 			std::wstring toString() const;
+
+		    // Returns a int representing the data in textual form.
+			int toInt() const;
+
+		    // Returns a double representing the data in textual form.
+			double toDouble() const;
 
 		    // Evaluation of arithmetic expressions. Returning the result on the same data.
 		    void evaluateArithmetic (std::wstring op, Data* d);
