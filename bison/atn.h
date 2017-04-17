@@ -1,6 +1,8 @@
 #ifndef ATN_H
 #define ATN_H
 
+#include <iostream>
+#include <locale>
 #include <codecvt>
 #include <stack>
 #include <map>

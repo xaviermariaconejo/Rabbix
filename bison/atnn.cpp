@@ -1,4 +1,6 @@
 #include "atnn.h"
+
+#include <algorithm>
  
 using namespace ATN;
 

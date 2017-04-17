@@ -1,5 +1,6 @@
 #include "atn.h"
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 
