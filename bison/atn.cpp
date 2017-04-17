@@ -303,8 +303,6 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
                 }
             }
             else { // expr is not an atn
-                // bool b = token == L"TOKEN STRING" && node->getValueWstring() == L"NULL";
-                // int increment = b ? 0 : 1;
                 bool b = token == L"TOKEN STRING" && node->getValueWstring() == L"NULL";
                 int increment = b ? 0 : 1;
                 if (!b) {
