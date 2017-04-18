@@ -39,16 +39,16 @@ Atn::Atn(std::wstring name) :
     }
 }
 
-int Atn::parse() {
-    m_column = m_location = 0;
-    m_row = 1;
-    return m_parser.parse();
-}
-
 void Atn::switchInputStream(std::istream *is) {
     m_scanner.switch_streams(is, NULL);
     m_func.clear();
     m_global.clear();
+}
+
+int Atn::parse() {
+    m_column = m_location = 0;
+    m_row = 1;
+    return m_parser.parse();
 }
 
 std::vector<Atn::Output> Atn::run(const std::vector<std::wstring>& in) {
@@ -205,7 +205,7 @@ unsigned int Atn::row() const {
 
 
 
-std::vector<Atn::OutputInternal> Atn::executeAtn(std::wstring atnname, std::map<std::wstring, Data*>& copy_global, const std::vector<std::wstring>& in, int init, int act) {
+std::vector<Atn::OutputInternal> Atn::executeAtn(std::wstring atnname, std::map<std::wstring, Data*>& global, const std::vector<std::wstring>& in, int init, int act) {
     // Get the data of the ATN
     auto atn_id = m_atn.find(atnname);
     if (atn_id == m_atn.end()) throw runtime_error(" atn " + converter.to_bytes(atnname) + " not declared");
@@ -223,13 +223,14 @@ std::vector<Atn::OutputInternal> Atn::executeAtn(std::wstring atnname, std::map<
         auto st = states.find(stateInit);
         if (st == states.end()) throw runtime_error(" state " + converter.to_bytes(stateInit) + " not declared");
         auto stateFinal = std::find(finals.begin(), finals.end(), stateInit);
-        vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act, copy_global, finals, states, stateFinal != finals.end());
+        vector<Atn::OutputInternal> output = executeState(in, *(st->second), init, act, global, finals, states, stateFinal != finals.end());
         finalOutput.insert( finalOutput.end(), output.begin(), output.end() );
         checkOutput(finalOutput);
     }
 
     return finalOutput;
 }
+
 
 std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstring>& in, const freeling::tree<ASTN*>& state, int init, int act, std::map<std::wstring, Data*>& global, const std::vector<std::wstring>& finals, const std::map<std::wstring, freeling::tree<ASTN*>*>& states, bool final) {
     // Inicializate de stack of the state & output
@@ -253,7 +254,7 @@ std::vector<Atn::OutputInternal> Atn::executeState(const std::vector<std::wstrin
                     newOutput.global[it->first] = new Data(*(it->second));
                 }
                 actualOutput.push_back(newOutput);
-                 if (act < in.size()) {
+                if (act < in.size()) {
                     vector<Atn::OutputInternal> output = executeAtn(L"main", copy_global, in, act, act);
                     actualOutput.insert( actualOutput.end(), output.begin(), output.end() );
                     checkOutput(actualOutput);
