@@ -117,33 +117,35 @@ atn ATN3D {
 	}
 
 	state D4 {
-		action {
-			@ = num;
-		}
+
 		transition {
 			to D1 if (func(_1D, $));
 			to D1 if (func(_2D, $));
 			to D3 if (func(_3D, $));
 		}
+
+		action {
+			@ = num;
+		}
 	}
 }
 
 atn main {
-	initial states: start;
+	initial states: S1;
 	final states: F1;
 
-	state start {
+	state S1 {
 		action {
 			init();
 		}
 
 		transition {
-			to M if (ATN3D);
+			to M1 if (ATN3D);
 			to F1 if ($ == "mil");
 		}
 	}
 
-	state M {
+	state M1 {
 		action {
 		}
 
@@ -170,15 +172,19 @@ atn main {
 		action {
 		}
 
-		transition { }
+		transition {
+		}
 	}
 }
 
 
 /*
-function f(a, b) {
+
+global glb1, glb2;
+
+function f(a, &b) {
 	print << a << " " << b << endl;
-	return true;
+	return a == b;
 }
 
 atn main {
@@ -186,11 +192,13 @@ atn main {
 	final states: final;
 
 	state start {
-		action {
-			print << "START MAIN" << endl;
-		}
 		transition {
 			to final if (second);
+			to final if ("NULL" && $.substring(0, 3) = "dos");
+		}
+
+		action {
+			print << "START MAIN" << endl;
 		}
 	}
 

@@ -1,5 +1,7 @@
 #include <iostream>
-#include "atn.h"
+
+// #include "freeling.h"
+// #include "freeling/morfo/atn.h"
 
 using namespace ATN;
 using namespace std;
